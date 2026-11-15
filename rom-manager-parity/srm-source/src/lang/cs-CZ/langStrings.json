@@ -1,0 +1,27 @@
+{
+  "preview": {
+    "component": {
+      "filter": "Vyhledat hru",
+      "selectType": "Typ obrázku",
+      "selectTypeOptions": {
+        "long": "Banery",
+        "tall": "Plakáty",
+        "hero": "Hrdinové",
+        "icon": "Ikony",
+        "logo": "Loga",
+        "games": "Všechny obrázky"
+      },
+      "by": "od",
+      "refreshImages": "Aktualizovat obrázky",
+      "saveImage": "Uložit obrázek do souboru",
+      "addLocalImages": "Přidat místní obrázek",
+      "retryDownload": "Zkusit znovu stáhnout obrázky",
+      "generateAppList": "Obnovit",
+      "saveAppList": "Uložit do Steamu",
+      "removeAppList": "Odstranit ze Steamu",
+      "remainingImages": "Načítání Url adres:",
+      "exportSelections": "Exportovat obal",
+      "importSelections": "Importovat obal"
+    }
+  }
+}

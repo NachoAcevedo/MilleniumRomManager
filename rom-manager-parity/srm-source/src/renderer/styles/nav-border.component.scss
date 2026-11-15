@@ -1,0 +1,11 @@
+@import "mixins";
+:host {
+  position: relative;
+  width: var(--srm-nav-edge-width);
+  background: var(--srm-nav-edge), var(--color-preview-menu-background);
+  cursor: ew-resize;
+  display: var(--display-nav-border);
+  &.dragging {
+    background: var(--color-nav-border-drag);
+  }
+}

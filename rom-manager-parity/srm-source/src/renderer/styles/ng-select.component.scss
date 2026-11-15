@@ -1,0 +1,101 @@
+@import "mixins";
+
+:host {
+  position: relative;
+
+  display: grid;
+
+  @include ngSelect();
+  @include ngSelectColor(ng-select);
+
+  .display {
+    display: grid;
+
+    padding: var(--ng-select-padding, 0);
+
+    cursor: pointer;
+
+    color: var(--color-ng-select-text);
+    border-width: var(--ng-select-border-width, 1px);
+    border-style: solid;
+    border-color: inherit;
+    background-color: var(--color-ng-select-background);
+    &::placeholder {
+      color: var(--color-ng-select-text);
+    }
+    align-content: center;
+    fill: inherit;
+
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr auto;
+    &:active,
+    &:focus,
+    &.open {
+      background: var(--color-ng-select-background-hover);
+      color: var(--color-ng-select-text-active);
+    }
+    > div {
+      overflow: hidden;
+
+      cursor: pointer;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    > svg {
+      height: 1.2em;
+      margin: 0 0 0 auto;
+
+      cursor: pointer;
+
+      fill: inherit;
+      polyline {
+        cursor: pointer;
+      }
+    }
+  }
+  .options {
+    position: absolute;
+    z-index: 3;
+    top: 100%;
+    left: 0;
+
+    display: none;
+
+    &.open {
+      display: grid;
+
+      overflow-y: auto;
+
+      min-width: calc(100% - (var(--ng-select-border-width, 1px) * 2));
+
+      border-width: var(--ng-select-border-width, 1px);
+      border-style: solid;
+      border-color: inherit;
+
+      max-height: 300px;
+      // Solid, so translucent row highlights don't show what's underneath.
+      background-color: var(--color-ng-select-background);
+
+      @include webkitScrollbar(ng-select-scrollbar);
+    }
+    .sectionTitle {
+      background-color: var(--color-ng-select-section-background);
+      color: var(--color-ng-select-text);
+      padding: var(--ng-select-padding, 0);
+    }
+    .fakeOption {
+      &:not(.hidden) {
+        display: grid;
+        grid-auto-flow: column;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        background-color: var(--color-ng-select-background);
+        padding: var(--ng-select-padding, 0);
+      }
+      &.hidden {
+        display: none;
+      }
+    }
+  }
+}

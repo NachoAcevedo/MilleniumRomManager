@@ -1,0 +1,291 @@
+@import "mixins";
+
+:host {
+  --reporter-width: 0fr;
+  --options-width: 0fr;
+
+  display: grid;
+  overflow: auto;
+
+  grid-area: route;
+  grid-template-areas:
+    "options messages bugreport"
+    "options messages bugreportdocs"
+    "menu menu menu";
+  grid-template-columns: var(--options-width) 1.5fr var(--reporter-width);
+  grid-template-rows: 1fr 1.3fr auto;
+
+  .options {
+    grid-area: options;
+    background-color: var(--color-preview-user-background);
+    @include webkitScrollbar(preview-scrollbar);
+    overflow-y: scroll;
+    .optionsGroup {
+      padding-left: 1em;
+      padding-right: 1em;
+      padding-top: 1em;
+      .optionsLabel {
+        margin-bottom: 0.5em;
+        span {
+          color: var(--color-preview-text);
+        }
+      }
+      .optionsButton {
+        @include button();
+        @include toggleButtonColor(toggle-button);
+        margin-bottom: 1em;
+        margin-right: 1em;
+      }
+    }
+  }
+  .bugreport {
+    grid-area: bugreport;
+    @include webkitScrollbar(logger-messages-scrollbar);
+    background-color: var(--color-logger-bugreport-background);
+    padding: 1em;
+    .inputContainer {
+      display: flex;
+      flex-direction: column;
+      margin: 0.25em 0 1em 0;
+      padding-left: 0em;
+      .inlineLeft {
+        display: flex;
+        align-items: left;
+        margin: 0.25em 0em 0.25em 0;
+        &.hidden {
+          display: none;
+        }
+      }
+      .inlineGroup {
+        display: flex;
+        margin: 0.25em 0em 0.25em 0;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .reportID {
+        padding: 0.2em 0em;
+        margin-left: 0.25em;
+        color: var(--color-logger-reportid);
+      }
+      .reportIDLabel {
+        padding: 0.2em 0em;
+        color: var(--color-settings-text);
+      }
+      .copy {
+        @include button();
+        @include clickButtonColor(click-button);
+        margin-left: 0.25em;
+      }
+      .text {
+        width: 30%;
+        color: var(--color-settings-text);
+      }
+
+      .longtext {
+        width: 100%;
+        color: var(--color-settings-text);
+      }
+
+      .ngToggleButton {
+        font-size: 1em;
+        margin: 0.25em 0 0.5em 0;
+        @include ngToggleButtonColor(ng-toggle-button);
+      }
+      .submit {
+        @include button();
+        @include clickButtonColor(click-button);
+      }
+
+      .ngTextInput {
+        @include ngTextInputColor(input);
+        @include ngTextInput();
+        &.multiline {
+          width: 100%;
+          height: 10em;
+        }
+        &:not(.multiline) {
+          width: 70%;
+        }
+        grid-column: 4;
+      }
+    }
+  }
+  .bugreportdocs {
+    grid-area: bugreportdocs;
+    background-color: var(--color-logger-bugreport-background);
+    overflow: auto;
+    padding: 1em;
+  }
+  .messagesArea {
+    grid-area: messages;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+  }
+  .findBar {
+    position: absolute;
+    top: 0.4em;
+    right: 0.9em;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.3em 0.4em;
+    border-radius: 4px;
+    background: var(--color-logger-menu-background, rgba(0, 0, 0, 0.7));
+    border: 1px solid var(--color-nav-link-border, rgba(255, 255, 255, 0.2));
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+
+    .findInput {
+      box-sizing: border-box;
+      width: 12em;
+      padding: 0.25em 0.4em;
+      font-size: 0.85em;
+      color: var(--color-logger-messages-text);
+      background: var(--color-nav-background, rgba(0, 0, 0, 0.3));
+      border: 1px solid var(--color-nav-link-border, rgba(255, 255, 255, 0.2));
+      border-radius: 3px;
+      outline: none;
+
+      &:focus {
+        border-color: var(--srm-accent);
+      }
+    }
+    .findCount {
+      min-width: 3.2em;
+      text-align: center;
+      font-size: 0.75em;
+      opacity: 0.7;
+      color: var(--color-logger-messages-text);
+    }
+    .findBtn {
+      cursor: pointer;
+      user-select: none;
+      opacity: 0.7;
+      font-size: 0.8em;
+      padding: 0 0.15em;
+      color: var(--color-logger-messages-text);
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+  .messages {
+    grid-area: messages;
+    flex: 1;
+    min-height: 0;
+    @include webkitScrollbar(logger-messages-scrollbar);
+    &.showReporter {
+      ::-webkit-scrollbar {
+        width: 0.75em;
+      }
+      overflow-y: scroll;
+    }
+    overflow: auto;
+
+    color: var(--color-logger-messages-text);
+    background-color: var(--color-logger-messages-background);
+
+    > div {
+      font-family: "Hack";
+      font-size: 0.7em;
+
+      display: flex;
+      flex: 1 0;
+
+      padding-left: 2px;
+
+      // (and its parts, e.g. search highlights: the global `*` rule turns
+      // selection off on every element)
+      &,
+      ::ng-deep * {
+        cursor: text;
+        user-select: text;
+      }
+      white-space: pre;
+
+      border-left-width: 2px;
+      border-left-style: solid;
+
+      &.wrap {
+        white-space: pre-wrap;
+      }
+
+      &.error {
+        border-left-color: var(--color-error);
+      }
+
+      &.info {
+        border-left-color: var(--color-info);
+      }
+
+      &.success {
+        border-left-color: var(--color-success);
+      }
+
+      &.fuzzy {
+        border-left-color: var(--color-fuzzy);
+      }
+    }
+
+    .lineText {
+      white-space: inherit;
+    }
+    mark {
+      background: rgba(255, 213, 79, 0.35);
+      color: inherit;
+      border-radius: 2px;
+
+      // The currently-focused occurrence during find navigation.
+      &.activeFindMark {
+        background: #ffb300;
+        color: #000;
+      }
+    }
+
+    &.empty {
+      display: flex;
+      > span {
+        margin: auto;
+      }
+    }
+  }
+  .menu {
+    @include webkitScrollbar(logger-menu-scrollbar, 0.5em);
+
+    display: grid;
+    grid-area: menu;
+    grid-template-areas: "lowerLeft . lowerRight";
+    grid-template-columns: auto 1fr auto;
+    .lowerLeft {
+      grid-area: lowerLeft;
+    }
+    .lowerRight {
+      grid-area: lowerRight;
+    }
+    overflow: auto;
+
+    border: solid 0.5em transparent;
+    background-color: var(--color-logger-menu-background);
+
+    .lowerLeft > div,
+    .lowerRight > div {
+      @include toggleButtonColor(click-button);
+      @include button();
+
+      margin: 0 0.25em;
+      &:last-child {
+        margin-right: 0;
+      }
+      &:first-child {
+        margin-left: 0;
+      }
+      &.dangerousButton {
+        @include clickButtonColor(dangerous-click-button);
+      }
+    }
+  }
+}

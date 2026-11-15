@@ -1,0 +1,82 @@
+<choose-accounts
+  [showChooseAccounts]="chooseUserAccountsVisible"
+  [steamDirectory]="appSettings.environmentVariables.steamDirectory"
+  (showAccounts)="chooseUserAccountsVisible = $event"
+  (accountsJoined)="setUserAccounts($event)"
+>
+</choose-accounts>
+<h1>{{ lang.splash.welcome }}</h1>
+<div class="stage1" *ngIf="stage == 'steamDir'">
+  <div class="descriptor">
+    <p>
+      {{ lang.splash.chooseSteamDirectory }}
+      {{ lang.splash.changeableIn }} <strong>{{ lang.splash.settings }}</strong
+      >{{ lang.splash.overriddenPer }}
+      <strong>{{ lang.splash.parser }}</strong>.
+    </p>
+  </div>
+  <div class="inputContainer">
+    <div class="inlineLeft">
+      <div class="directoryInput">
+        <ng-text-input
+          class="ngTextInput"
+          [placeholder]="placeholderSteamDir"
+          [(ngModel)]="appSettings.environmentVariables.steamDirectory"
+        >
+        </ng-text-input>
+        <ng-path-input
+          class="clickButton2"
+          [stateless]="true"
+          [directory]="true"
+          (pathChange)="
+            appSettings.environmentVariables.steamDirectory = $event;
+            onSettingsChange()
+          "
+        >
+          {{ lang.text.browse_btn }}
+        </ng-path-input>
+      </div>
+    </div>
+  </div>
+  <div
+    class="clickButton"
+    [class.disabled]="!appSettings.environmentVariables.steamDirectory"
+    (click)="moveToUsers()"
+  >
+    {{ lang.splash.next_btn }}
+  </div>
+</div>
+<div class="stage2" *ngIf="stage == 'userAccounts'">
+  <div class="descriptor">
+    <p>
+      {{ lang.splash.steamDirectorySetTo }}
+      <strong>{{ appSettings.environmentVariables.steamDirectory }}</strong
+      >. {{ lang.splash.chooseUserAccounts }}
+      {{ lang.splash.changeableIn }} <strong>{{ lang.splash.settings }}</strong
+      >{{ lang.splash.overriddenPer }}
+      <strong>{{ lang.splash.parser }}</strong>.
+    </p>
+  </div>
+  <div class="inputContainer">
+    <div class="inlineLeft">
+      <div class="directoryInput">
+        <ng-bubbles
+          [(ngModel)]="appSettings.environmentVariables.userAccounts"
+          (ngModelChange)="
+            appSettings.environmentVariables.userAccounts = $event;
+            onSettingsChange()
+          "
+        ></ng-bubbles>
+        <div class="clickButton2" (click)="chooseAccounts()">{{ lang.text.choose_btn }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="clickButton" (click)="moveToSteamDir()">{{ lang.splash.back_btn }}</div>
+  <div
+    class="clickButton"
+    [class.disabled]="!appSettings.environmentVariables.userAccounts"
+    (click)="finishSetup()"
+  >
+    {{ lang.splash.next_btn }}
+  </div>
+</div>

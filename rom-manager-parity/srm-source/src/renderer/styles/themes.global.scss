@@ -1,0 +1,1127 @@
+@import "mixins";
+
+// Theme-dependent styles. Colors come from the design tokens (--srm-*,
+// see renderer/theme/tokens.ts), set on <html> by the ThemeService. The
+// --color-* variables below are the components' older names for them,
+// mapped onto tokens once for all themes.
+// Theme classes only hold layout differences and theme-specific rules.
+
+:root {
+  --color--accent: var(--srm-accent);
+  --color--filled: var(--srm-success);
+  --color--filled-hover: var(--srm-success);
+  --color--missing: var(--srm-danger);
+  --color--missing-hover: var(--srm-danger);
+  --color--required: var(--srm-accent);
+  --color--required-hover: var(--srm-accent);
+  --color-about-background: transparent;
+  --color-about-scrollbar-thumb: var(--srm-scrollbar);
+  --color-about-scrollbar-track: transparent;
+  --color-alert-background: var(--srm-glass);
+  --color-alert-text: var(--srm-text);
+  --color-app-loading-spinner: var(--srm-accent);
+  // Buttons, switches and empty artwork are mixed toward the text color, so
+  // they stand out from the surfaces in any theme (light or dark), however
+  // close its surface colors are.
+  --color-click-button-background: color-mix(
+    in srgb,
+    var(--srm-text) 10%,
+    var(--srm-surface-raised)
+  );
+  --color-click-button-background-active: var(--srm-accent-hover);
+  --color-click-button-background-disabled: var(--srm-surface-sunken);
+  --color-click-button-background-hover: var(--srm-accent);
+  --color-click-button-border: color-mix(
+    in srgb,
+    var(--srm-text) 12%,
+    transparent
+  );
+  --color-click-button-border-active: transparent;
+  --color-click-button-border-disabled: transparent;
+  --color-click-button-border-hover: transparent;
+  --color-click-button-text: var(--srm-text);
+  --color-click-button-text-active: var(--srm-text-on-accent);
+  --color-click-button-text-disabled: var(--srm-text-subtle);
+  --color-click-button-text-hover: var(--srm-text-on-accent);
+  --color-dangerous-click-button-background: var(--srm-danger);
+  --color-dangerous-click-button-background-active: color-mix(
+    in srgb,
+    var(--srm-danger) 80%,
+    black
+  );
+  --color-dangerous-click-button-background-disabled: var(--srm-surface-sunken);
+  --color-dangerous-click-button-background-hover: color-mix(
+    in srgb,
+    var(--srm-danger) 85%,
+    white
+  );
+  --color-dangerous-click-button-border: var(--srm-danger);
+  --color-dangerous-click-button-border-active: color-mix(
+    in srgb,
+    var(--srm-danger) 80%,
+    black
+  );
+  --color-dangerous-click-button-border-disabled: var(--srm-surface-sunken);
+  --color-dangerous-click-button-border-hover: color-mix(
+    in srgb,
+    var(--srm-danger) 85%,
+    white
+  );
+  --color-dangerous-click-button-text: var(--srm-text-on-accent);
+  --color-dangerous-click-button-text-active: var(--srm-text-on-accent);
+  --color-dangerous-click-button-text-disabled: var(--srm-text-subtle);
+  --color-dangerous-click-button-text-hover: var(--srm-text-on-accent);
+  --color-details-options-background: var(--srm-surface);
+  --color-error: var(--srm-danger);
+  --color-fuzzy: var(--srm-info);
+  --color-info: var(--srm-info);
+  --color-info-button: var(--srm-accent);
+  --color-info-button-background: var(--srm-accent);
+  --color-info-button-background-hover: var(--srm-accent);
+  --color-info-button-hover: var(--srm-accent);
+  --color-info-button-text: var(--srm-text-on-accent);
+  --color-input-background: var(--srm-surface-raised);
+  --color-input-background-disabled: var(--srm-surface-sunken);
+  --color-input-background-focus: var(--srm-surface-hover);
+  --color-input-background-hover: var(--srm-surface-hover);
+  --color-input-border: var(--srm-border);
+  --color-input-border-disabled: var(--srm-border);
+  --color-input-border-focus: var(--srm-accent);
+  --color-input-border-hover: var(--srm-border-strong);
+  --color-input-shadow: transparent;
+  --color-input-shadow-disabled: transparent;
+  --color-input-shadow-focus: var(--srm-focus-ring);
+  --color-input-shadow-hover: transparent;
+  --color-input-text: var(--srm-text);
+  --color-input-text-disabled: var(--srm-text-subtle);
+  --color-input-text-focus: var(--srm-text);
+  --color-input-text-hover: var(--srm-text);
+  --color-logger-bugreport-background: transparent;
+  --color-logger-menu-background: var(--srm-glass);
+  --color-logger-menu-scrollbar-thumb: var(--srm-scrollbar);
+  --color-logger-menu-scrollbar-track: transparent;
+  --color-logger-messages-background: transparent;
+  --color-logger-messages-scrollbar-thumb: var(--srm-scrollbar);
+  --color-logger-messages-scrollbar-track: transparent;
+  --color-logger-messages-text: var(--srm-text);
+  --color-logger-reportid: var(--srm-warning);
+  --color-main-background: var(--srm-bg);
+  --color-markdown-background: transparent;
+  --color-markdown-blockquote-border: var(--srm-accent);
+  --color-markdown-blockquote-text: var(--srm-text-muted);
+  --color-markdown-code: var(--srm-text);
+  --color-markdown-code-background: var(--srm-surface-sunken);
+  --color-markdown-code-inline: var(--srm-warning);
+  --color-markdown-code-scrollbar-thumb: var(--srm-scrollbar);
+  --color-markdown-code-scrollbar-track: transparent;
+  --color-markdown-h1: var(--srm-text);
+  --color-markdown-h2: var(--srm-text);
+  --color-markdown-h3: var(--srm-text);
+  --color-markdown-h4: var(--srm-text);
+  --color-markdown-h5: var(--srm-text);
+  --color-markdown-h6: var(--srm-text);
+  --color-markdown-horizontal-rule: var(--srm-border-strong);
+  --color-markdown-link: var(--srm-link);
+  --color-markdown-link-active: var(--srm-accent-hover);
+  --color-markdown-link-hover: var(--srm-accent-hover);
+  --color-markdown-scrollbar-thumb: var(--srm-scrollbar);
+  --color-markdown-scrollbar-track: transparent;
+  --color-markdown-strong: var(--srm-text);
+  --color-markdown-table-border: var(--srm-border-strong);
+  --color-markdown-table-header: var(--srm-text);
+  --color-markdown-table-row-background: var(--srm-surface-raised);
+  --color-markdown-table-row-background-2n: var(--srm-surface-sunken);
+  --color-markdown-table-scrollbar-thumb: var(--srm-scrollbar);
+  --color-markdown-table-scrollbar-track: transparent;
+  --color-markdown-text: var(--srm-text-muted);
+  --color-markdown-underline: transparent;
+  --color-nav-background: var(--srm-surface);
+  --color-nav-border-drag: var(--srm-accent);
+  --color-nav-link-background-active: var(--srm-accent-soft);
+  --color-nav-link-bg-hover: var(--srm-surface-hover);
+  --color-nav-link-border: transparent;
+  --color-nav-link-border-active: transparent;
+  --color-nav-link-border-hover: transparent;
+  --color-nav-link-disabled: var(--srm-danger);
+  --color-nav-link-disabled-active: var(--srm-danger);
+  --color-nav-link-disabled-hover: var(--srm-danger);
+  --color-nav-link-enabled: var(--srm-success);
+  --color-nav-link-enabled-active: var(--srm-success);
+  --color-nav-link-enabled-hover: var(--srm-success);
+  --color-nav-link-text: var(--srm-text-muted);
+  --color-nav-link-text-active: var(--srm-text);
+  --color-nav-link-text-hover: var(--srm-text);
+  --color-nav-link-unsaved: var(--srm-warning);
+  --color-nav-link-unsaved-active: var(--srm-warning);
+  --color-nav-link-unsaved-hover: var(--srm-warning);
+  --color-nav-scrollbar-thumb: var(--srm-scrollbar);
+  --color-nav-scrollbar-track: transparent;
+  --color-nested-form-background: transparent;
+  --color-nested-form-error: var(--srm-danger);
+  --color-nested-form-error-background: var(--srm-danger-soft);
+  --color-nested-form-error-border: var(--srm-warning);
+  --color-nested-form-label: var(--srm-text-muted);
+  --color-nested-form-scrollbar-thumb: var(--srm-scrollbar);
+  --color-nested-form-scrollbar-track: transparent;
+  --color-ng-bubbles-background: var(--srm-accent-soft);
+  --color-ng-bubbles-border: var(--srm-accent);
+  --color-select-arrow-left: var(--srm-text);
+  --color-select-arrow-left-active: var(--srm-text);
+  --color-select-arrow-left-hover: var(--srm-text-muted);
+  --color-select-arrow-right: var(--srm-text);
+  --color-select-arrow-right-active: var(--srm-text);
+  --color-select-arrow-right-hover: var(--srm-text-muted);
+  --color-select-arrow-down-active: var(--srm-text);
+  --color-select-arrow-down-hover: var(--srm-text-muted);
+  --color-preview-app-button-active: var(--srm-text);
+  --color-preview-app-button-hover: var(--srm-text-muted);
+  --color-preview-image-empty: color-mix(
+    in srgb,
+    var(--srm-text) 7%,
+    var(--srm-surface-sunken)
+  );
+  --color-preview-image-downloading-background: var(--color-preview-image-empty);
+  --color-preview-image-retrieving-url-background: var(
+    --color-preview-image-empty
+  );
+  --color-ng-select-arrow: var(--srm-text-muted);
+  --color-ng-select-arrow-active: var(--srm-text-muted);
+  --color-ng-select-arrow-hover: var(--srm-text-muted);
+  --color-ng-select-background: var(--srm-surface-raised);
+  --color-ng-select-background-active: var(--srm-surface-hover);
+  --color-ng-select-background-hover: var(--srm-surface-hover);
+  --color-ng-select-border: var(--srm-border);
+  --color-ng-select-border-active: var(--srm-accent);
+  --color-ng-select-border-hover: var(--srm-border-strong);
+  --color-ng-select-option-background: var(--srm-surface-raised);
+  --color-ng-select-option-background-active: var(--srm-accent-soft);
+  --color-ng-select-option-background-hover: var(--srm-surface-hover);
+  --color-ng-select-option-border: transparent;
+  --color-ng-select-option-border-active: transparent;
+  --color-ng-select-option-border-hover: transparent;
+  --color-ng-select-option-text: var(--srm-text);
+  --color-ng-select-option-text-active: var(--srm-text);
+  --color-ng-select-option-text-hover: var(--srm-text);
+  --color-ng-select-scrollbar-thumb: var(--srm-scrollbar);
+  --color-ng-select-scrollbar-track: transparent;
+  --color-ng-select-section-background: var(--srm-surface-sunken);
+  --color-ng-select-text: var(--srm-text);
+  --color-ng-select-text-active: var(--srm-text);
+  --color-ng-select-text-hover: var(--srm-text);
+  --color-ng-toggle-button-border: var(--srm-border-strong);
+  --color-ng-toggle-button-border-active: var(--srm-accent);
+  --color-ng-toggle-button-border-active-hover: var(--srm-accent);
+  --color-ng-toggle-button-border-hover: var(--srm-border-strong);
+  --color-ng-toggle-button-button-border: transparent;
+  --color-ng-toggle-button-button-border-active: transparent;
+  --color-ng-toggle-button-button-border-active-hover: transparent;
+  --color-ng-toggle-button-button-border-hover: transparent;
+  --color-ng-toggle-button-button-fill: #ffffff;
+  --color-ng-toggle-button-button-fill-active: #ffffff;
+  --color-ng-toggle-button-button-fill-active-hover: #ffffff;
+  --color-ng-toggle-button-button-fill-hover: #ffffff;
+  --color-ng-toggle-button-fill: color-mix(
+    in srgb,
+    var(--srm-text) 28%,
+    var(--srm-surface-raised)
+  );
+  --color-ng-toggle-button-fill-active: var(--srm-accent);
+  --color-ng-toggle-button-fill-active-hover: var(--srm-accent);
+  --color-ng-toggle-button-fill-hover: color-mix(
+    in srgb,
+    var(--srm-text) 36%,
+    var(--srm-surface-raised)
+  );
+  --color-ng-toggle-button-text: var(--srm-text-muted);
+  --color-parser-menu-scrollbar-thumb: var(--srm-scrollbar);
+  --color-parser-menu-scrollbar-track: transparent;
+  --color-parsers-menu-background: var(--srm-glass);
+  --color-position-update-notifier-border: var(--srm-border-strong);
+  --color-preview-app-button: var(--srm-text-muted);
+  --color-preview-app-hover-background: var(--srm-art-overlay);
+  --color-preview-app-zoom-slider-text: var(--srm-text-muted);
+  --color-preview-app-zoom-slider-thumb-background: var(--srm-text);
+  --color-preview-app-zoom-slider-thumb-background-focus: var(--srm-text);
+  --color-preview-app-zoom-slider-thumb-background-hover: var(--srm-text);
+  --color-preview-app-zoom-slider-track-background: var(--srm-accent);
+  --color-preview-app-zoom-slider-track-background-focus: var(--srm-accent);
+  --color-preview-app-zoom-slider-track-background-hover: var(--srm-accent);
+  --color-preview-background: transparent;
+  --color-preview-directory-background: var(--srm-surface);
+  --color-preview-image-border: transparent;
+  --color-preview-image-downloading-border: var(--srm-accent);
+  --color-preview-image-failed-background: var(--color-preview-image-empty);
+  --color-preview-image-failed-border: var(--srm-danger);
+  --color-preview-image-not-found-background: var(--color-preview-image-empty);
+  --color-preview-image-not-found-border: color-mix(
+    in srgb,
+    var(--srm-text) 16%,
+    transparent
+  );
+  --color-preview-image-retrieving-url-border: var(--srm-info);
+  --color-preview-menu-background: var(--srm-glass);
+  --color-preview-scrollbar-thumb: var(--srm-scrollbar);
+  --color-preview-scrollbar-track: transparent;
+  --color-preview-separator: var(--srm-border);
+  --color-preview-text: var(--srm-text);
+  --color-preview-user-background: var(--srm-surface-raised);
+  --color-settings-background: transparent;
+  --color-settings-text: var(--srm-text-muted);
+  --color-success: var(--srm-success);
+  --color-titlebar-background: transparent;
+  --color-titlebar-close-background: transparent;
+  --color-titlebar-close-background-active: var(--srm-danger);
+  --color-titlebar-close-background-hover: var(--srm-danger);
+  --color-titlebar-close-text: var(--srm-text-muted);
+  --color-titlebar-close-text-active: var(--srm-text-on-accent);
+  --color-titlebar-close-text-hover: var(--srm-text-on-accent);
+  --color-titlebar-maximize-background: transparent;
+  --color-titlebar-maximize-background-active: var(--srm-surface-hover);
+  --color-titlebar-maximize-background-hover: var(--srm-surface-hover);
+  --color-titlebar-maximize-text: var(--srm-text-muted);
+  --color-titlebar-maximize-text-active: var(--srm-text-muted);
+  --color-titlebar-maximize-text-hover: var(--srm-text-muted);
+  --color-titlebar-minimize-background: transparent;
+  --color-titlebar-minimize-background-active: var(--srm-surface-hover);
+  --color-titlebar-minimize-background-hover: var(--srm-surface-hover);
+  --color-titlebar-minimize-text: var(--srm-text-muted);
+  --color-titlebar-minimize-text-active: var(--srm-text-muted);
+  --color-titlebar-minimize-text-hover: var(--srm-text-muted);
+  --color-titlebar-title: var(--srm-text-muted);
+  --color-toggle-button-background: var(--color-click-button-background);
+  --color-toggle-button-background-active: var(--srm-accent);
+  --color-toggle-button-background-active-hover: var(--srm-accent);
+  --color-toggle-button-background-hover: color-mix(
+    in srgb,
+    var(--srm-text) 16%,
+    var(--srm-surface-raised)
+  );
+  --color-toggle-button-border: transparent;
+  --color-toggle-button-border-active: transparent;
+  --color-toggle-button-border-active-hover: transparent;
+  --color-toggle-button-border-hover: transparent;
+  --color-toggle-button-text: var(--srm-text-muted);
+  --color-toggle-button-text-active: var(--srm-text-on-accent);
+  --color-toggle-button-text-active-hover: var(--srm-text-on-accent);
+  --color-toggle-button-text-hover: var(--srm-text-muted);
+
+  // used without a definition before (fallbacks or nothing)
+  --color--warn: var(--srm-warning);
+  --color-markdown-code-inline-background: var(--srm-surface-sunken);
+  --ng-text-placeholder-color: var(--srm-text-subtle);
+  --ng-select-border-width: 1px;
+  --select-arrow-left-width: 55;
+
+  // layout
+  --border-update-notifier-width: 1px;
+  --border-width-alert: 0 0 0 4px;
+  --color-preview-app-zoom-slider-thumb-border: 0;
+  --color-preview-app-zoom-slider-thumb-border-radius: 100%;
+  --color-preview-app-zoom-slider-thumb-height: 18px;
+  --color-preview-app-zoom-slider-thumb-margin-top: -7px;
+  --color-preview-app-zoom-slider-thumb-width: 18px;
+  --color-preview-app-zoom-slider-track-border: 0;
+  --color-preview-app-zoom-slider-track-height: 0.25em;
+  --display-exceptions-save-status: none;
+  --display-nav-border: inherit;
+  --display-preview-title: none;
+  --display-update: flex;
+  --filter-update-notifier-backdrop: blur(5px);
+  --font-family-markdown-h1: "MotivaSans";
+  --font-markdown-h1: 1.5em;
+  --font-markdown-h2: 1.25em;
+  --font-markdown-h3: 1em;
+  --font-markdown-h4: 1em;
+  --font-markdown-h5: 0.875em;
+  --font-markdown-h6: 0.85em;
+  --grid-app: "titlebar titlebar titlebar" "navarea navborder route";
+  --grid-app-columns: auto auto 1fr;
+  --grid-app-rows: auto 1fr;
+  --height-nav-link: 1.2em;
+  --height-ng-buttons: 20px;
+  --height-update-notifier: auto;
+  --height-update-notifier-backdrop: 100vh;
+  --img-nav-link-display: inline-block;
+  --margin-info-button: 0 0 0 10px;
+  --margin-input-text: 16px;
+  --margin-markdown-hx: 3rem 0 1rem 0;
+  --margin-nested-form-error: 0 0 0 0;
+  --margin-update-notifier: auto;
+  --nav-direction: column;
+  --nav-link-before-margin-left: -10px;
+  --nav-parsers-display: flex;
+  --nav-width: 20vw;
+  --nav-width-max: 100vw;
+  --ng-select-margin: var(--margin-input-text);
+  --ng-select-padding: 0.2em 0.1em;
+  --ng-select-radius: 4px;
+  --order-info-button: 2;
+  --padding-click-button: 8px 32px;
+  --padding-input-text: var(--ng-select-padding);
+  --padding-nav-link: 16px;
+  --padding-nav-link-expand: 0px;
+  --padding-nested-form-error: 0 1em;
+  --padding-preview-separator: 18px;
+  --padding-update-notifier: 1em 2em;
+  --position-update: static;
+  --position-update-notifier-backdrop: fixed;
+  --position-update-notifier-bottom: 0;
+  --position-update-notifier-left: 0;
+  --position-update-notifier-right: 0;
+  --position-update-notifier-top: 0;
+  --radius-click-button: 4px;
+  --width-preview-select-type: 10em;
+  --width-update-notifier: auto;
+  --width-update-notifier-backdrop: 100vw;
+}
+
+.Classic {
+  // used without a definition before (fallbacks or nothing)
+  --color--warn: var(--srm-warning);
+  --color-markdown-code-inline-background: var(--srm-surface-sunken);
+  --ng-text-placeholder-color: var(--srm-text-subtle);
+  --ng-select-border-width: 1px;
+  --select-arrow-left-width: 55;
+
+  // layout that differs from the default (Deck)
+  --border-width-alert: 1px 1px 1px 1px;
+  --padding-click-button: 0.2em 0.5em;
+  --radius-click-button: 0px;
+  --padding-input-text: 0.2em 0.1em;
+  --margin-input-text: 0 0 0.5em 0;
+  --height-nav-link: 20px;
+  --padding-nav-link: 8px 16px;
+  --padding-nav-link-expand: 0px 16px;
+  --nav-link-before-margin-left: 0px;
+  --img-nav-link-display: none;
+  --ng-select-padding: 0.2em 0.1em;
+  --ng-select-radius: 4px;
+  --ng-select-margin: var(--margin-input-text);
+  --color-preview-app-zoom-slider-thumb-height: 1.5em;
+  --color-preview-app-zoom-slider-thumb-width: 0.75em;
+  --color-preview-app-zoom-slider-thumb-border-radius: 0;
+  --color-preview-app-zoom-slider-thumb-margin-top: -8px;
+  --padding-preview-separator: 0.25em 0.25em 0.25em 1.375em;
+  --margin-nested-form-error: 0.25em 0 0 0;
+  --margin-info-button: 0 0.25em 0 0;
+  --order-info-button: 0;
+  --font-markdown-h1: 2em;
+  --font-markdown-h2: 1.5em;
+  --font-markdown-h3: 1.25em;
+  --margin-markdown-hx: 1.5rem 0 1rem 0;
+  --width-preview-select-type: 8em;
+  --position-update-notifier-right: auto;
+  --position-update-notifier-top: auto;
+  --width-update-notifier: 20vw;
+  --height-update-notifier: 20vh;
+  --margin-update-notifier: 0.5em 0.5em;
+  --border-update-notifier-width: var(--border-width-alert);
+  --display-update: inherit;
+  --position-update: absolute;
+  --display-exceptions-save-status: inherit;
+
+  .only-emudeck {
+    display: none !important;
+  }
+  .previewSpinner {
+    margin-left: calc(0.5 * (100vw - var(--nav-width)) - 2.5em);
+  }
+  .appOverlay {
+    outline: 2px solid var(--color-preview-user-background);
+    opacity: 0;
+    transition: 0.5s;
+    &:hover {
+      opacity: 1;
+    }
+
+    .imageSelector {
+      polyline {
+        stroke-width: var(--select-arrow-left-width, 55);
+      }
+    }
+    & > .appInfo .title {
+      min-height: 20px;
+      span {
+        text-overflow: ellipsis;
+      }
+    }
+    & > .appInfo > div.imageIndex {
+      text-align: right !important;
+      padding: 6px 8px 0 0 !important;
+      font-size: calc(var(--preview-image-size) * 3em) !important;
+    }
+    .btn {
+      @include button();
+      @include clickButtonColor(click-button);
+      display: initial;
+      padding: 5px;
+      flex: 1;
+      font-size: 12px;
+      border-radius: 0;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.8);
+
+      &:hover {
+        color: var(--color-click-button-text-hover);
+        border-color: var(--color-click-button-border-hover);
+        background-color: var(--color-click-button-background-hover);
+
+        fill: var(--color-click-button-text-hover);
+      }
+
+      &:active {
+        color: var(--color-click-button-text-active);
+        border-color: var(--color-click-button-border-active);
+        background-color: var(--color-click-button-background-active);
+
+        fill: var(--color-click-button-text-active);
+      }
+      img {
+        display: none !important;
+      }
+    }
+  }
+  ng-text-input,
+  ng-bubbles,
+  ng-select {
+    &.required,
+    &.missing,
+    &.filled {
+      .display {
+        border: 0;
+      }
+    }
+    &.required {
+      border: 1px solid var(--color--required) !important;
+      &:hover,
+      &:focus {
+        border: 1px solid var(--color--required-hover) !important;
+      }
+    }
+    &.missing {
+      border: 1px solid var(--color--missing) !important;
+      &:hover,
+      &:focus {
+        border: 1px solid var(--color--missing-hover) !important;
+      }
+    }
+    &.filled {
+      border: 1px solid var(--color--filled) !important;
+      &:hover,
+      &:focus {
+        border: 1px solid var(--color--filled-hover) !important;
+      }
+    }
+  }
+  --font-weight-nested-form-label: normal; //
+  --font-transform-nested-form-label: inherit; //
+  --font-size-nested-form-label: 16px; //
+  --color-nav-background: inherit; //
+}
+
+.EmuDeck {
+  // used without a definition before (fallbacks or nothing)
+  --color--warn: var(--srm-warning);
+  --color-markdown-code-inline-background: var(--srm-surface-sunken);
+  --ng-text-placeholder-color: var(--srm-text-subtle);
+  --ng-select-border-width: 1px;
+  --select-arrow-left-width: 55;
+
+  // layout that differs from the default (Deck)
+  --grid-app: "titlebar" "route" "navarea";
+  --grid-app-rows: auto 1fr auto;
+  --grid-app-columns: auto;
+  --nav-width: 100vw;
+  --nav-direction: row;
+  --nav-parsers-display: none;
+  --padding-click-button: 14px 24px;
+  --radius-click-button: 34px;
+  --padding-nav-link: 0;
+  --nav-link-before-margin-left: 0px;
+  --height-nav-link: 100%;
+  --font-family-markdown-h1: "MotivaSans";
+  --font-markdown-h1: 50px;
+  --display-nav-border: none;
+  --height-ng-buttons: 50%;
+
+  .not-emudeck {
+    display: none !important;
+  }
+  .previewSpinner {
+    margin-left: calc(50vw - 2.5em);
+  }
+  @font-face {
+    font-family: "MotivaSans";
+    src: url("../../assets/fonts/Raleway-Thin.ttf") format("truetype");
+    font-weight: 100;
+  }
+  @font-face {
+    font-family: "MotivaSans";
+    src: url("../../assets/fonts/Raleway-Light.ttf") format("truetype");
+    font-weight: 200;
+  }
+  @font-face {
+    font-family: "MotivaSans";
+    src: url("../../assets/fonts/Raleway-Regular.ttf") format("truetype");
+    font-weight: 300;
+  }
+  @font-face {
+    font-family: "MotivaSans";
+    src: url("../../assets/fonts/Raleway-Medium.ttf") format("truetype");
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: "MotivaSans";
+    src: url("../../assets/fonts/Raleway-Black.ttf") format("truetype");
+    font-weight: 600;
+  }
+  body {
+    font-family: "MotivaSans";
+    background: #222 url("../../assets/themes/emudeck/bg.png") no-repeat;
+    background-size: cover;
+  }
+  .appOverlay {
+    outline: 2px solid var(--color-preview-user-background);
+    opacity: 1;
+
+    .imageSelector {
+      polyline {
+        stroke-width: var(--select-arrow-left-width, 55);
+      }
+    }
+    & > .appInfo .title {
+      min-height: 20px;
+      span {
+        text-overflow: ellipsis;
+      }
+    }
+    & > .appInfo > div.imageIndex {
+      text-align: right !important;
+      padding: 6px 8px 0 0 !important;
+      font-size: calc(var(--preview-image-size) * 3em) !important;
+    }
+    .appButtons {
+      display: flex;
+      width: 100%;
+    }
+    .btn {
+      @include button();
+      @include clickButtonColor(click-button);
+      display: initial;
+      padding: 5px;
+      flex: 1;
+      font-size: 12px;
+      border-radius: 0;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.8);
+
+      &:hover {
+        color: var(--color-click-button-text-hover);
+        border-color: var(--color-click-button-border-hover);
+        background-color: var(--color-click-button-background-hover);
+
+        fill: var(--color-click-button-text-hover);
+      }
+
+      &:active {
+        color: var(--color-click-button-text-active);
+        border-color: var(--color-click-button-border-active);
+        background-color: var(--color-click-button-background-active);
+
+        fill: var(--color-click-button-text-active);
+      }
+      img {
+        display: none !important;
+      }
+    }
+  }
+  ng-text-input,
+  ng-bubbles,
+  ng-select {
+    &.required,
+    &.missing,
+    &.filled {
+      .display {
+        border: 0;
+      }
+    }
+    &.required {
+      border: 1px solid var(--color--required) !important;
+      &:hover,
+      &:focus {
+        border: 1px solid var(--color--required-hover) !important;
+      }
+    }
+    &.missing {
+      border: 1px solid var(--color--missing) !important;
+      &:hover,
+      &:focus {
+        border: 1px solid var(--color--missing-hover) !important;
+      }
+    }
+    &.filled {
+      border: 1px solid var(--color--filled) !important;
+      &:hover,
+      &:focus {
+        border: 1px solid var(--color--filled-hover) !important;
+      }
+    }
+  }
+  &.EmuDeck.EmuDeck.EmuDeck.EmuDeck.EmuDeck navarea nav {
+    justify-content: end;
+    margin: 0 10px;
+
+    nav-link,
+    nav-expand .items nav-link {
+      display: inline-flex;
+
+      @include button();
+      @include clickButtonColor(click-button);
+
+      margin-left: 18px;
+
+      &:hover {
+        color: var(--color-click-button-text-hover);
+        border-color: var(--color-click-button-border-hover);
+        background-color: var(--color-click-button-background-hover);
+
+        fill: var(--color-click-button-text-hover);
+      }
+
+      &:active {
+        color: var(--color-click-button-text-active);
+        border-color: var(--color-click-button-border-active);
+        background-color: var(--color-click-button-background-active);
+
+        fill: var(--color-click-button-text-active);
+      }
+      img {
+        display: none !important;
+      }
+    }
+
+    nav-expand {
+      margin-left: 18px;
+      nav-link {
+        margin-left: 0 !important;
+        &:before {
+          display: none !important;
+        }
+      }
+    }
+  }
+  navarea {
+    background: transparent;
+    display: flex;
+    box-sizing: border-box;
+
+    &:not(:empty) {
+      padding: 28px;
+    }
+  }
+  &.EmuDeck.EmuDeck .ng-trigger-slideIn {
+    top: 32px;
+    bottom: auto;
+  }
+  &.EmuDeck.EmuDeck settings,
+  &.EmuDeck.EmuDeck about {
+    width: 94vw;
+    max-width: 94vw;
+    margin: 0 auto;
+  }
+  &.EmuDeck.EmuDeck about {
+    padding-top: 0;
+    margin-top: 30px;
+  }
+  &.EmuDeck.EmuDeck nav-parsers {
+    min-height: 50vh;
+    max-height: 70vh;
+    .parsers {
+      height: 100%;
+      overflow: hidden;
+      nav-expand {
+        height: 100%;
+        .items {
+          height: 100%;
+          overflow-y: auto;
+          padding-bottom: 10% !important;
+          display: flex;
+          overflow-y: auto;
+          flex-direction: row;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+          flex-wrap: wrap;
+          justify-content: space-between;
+
+          .inputContainer,
+          .inlineGroup.inlineGroup.inlineGroup {
+            margin: 0;
+          }
+          .inlineGroup.inlineGroup.inlineGroup {
+            align-items: baseline;
+          }
+          nav-link {
+            border-left: 0;
+            padding: 24px 26px;
+            padding: 56px 15px;
+            color: #444;
+            transition: 0.2s;
+            pointer-events: none;
+            & + ng-toggle-button {
+              display: none !important;
+            }
+            img {
+              margin-right: 0;
+              width: 100%;
+              max-width: 120px;
+              max-height: 68px;
+              object-fit: contain;
+            }
+            small {
+              font-weight: 600;
+            }
+
+            &:before {
+              display: none !important;
+              top: 0;
+              left: 0;
+              position: absolute;
+              content: "";
+              width: 0.5em;
+              height: 100%;
+              background-color: var(--color-nav-link-enabled);
+              border-radius: 4px 0 0 4px;
+              margin: 0 0 0 0em;
+              transform: translateY(0%);
+            }
+            &.active,
+            &:hover {
+              color: #444;
+            }
+          }
+        }
+      }
+    }
+    //65px
+    .title {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      overflow: hidden;
+      > .inputContainer {
+        margin: 0;
+        > .inlineGroup.inlineGroup.inlineGroup {
+          margin: 0;
+          justify-content: start;
+        }
+      }
+      .titlelink {
+        padding: 0;
+        width: auto;
+        .content {
+          padding-left: 0;
+        }
+      }
+    }
+
+    .item {
+      background-color: rgba(255, 255, 255, 1);
+      padding-right: 0px;
+      margin-bottom: 10px;
+      margin-right: 10px;
+      border-radius: 4px;
+      transition: 0.8s;
+      width: 15%;
+      max-height: 140px;
+      text-align: center;
+      &.disabled {
+        background-color: rgba(255, 255, 255, 0.6);
+        transition: 0.8s;
+      }
+    }
+  }
+  &.EmuDeck.EmuDeck.EmuDeck.EmuDeck user-exceptions {
+    grid-template-areas:
+      "description description"
+      "upperMenu upperMenu"
+      "exceptions exceptions"
+      "menu menu";
+
+    grid-template-rows: auto auto 1fr auto;
+
+    .upperMenu {
+      max-width: 94vw;
+      width: 100%;
+      margin: 0 auto;
+      .search {
+        justify-content: left;
+      }
+    }
+
+    .exception-entry {
+      background-color: rgb(255, 255, 255);
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      margin-right: 10px;
+      border-radius: 4px;
+      transition: 0.8s;
+      .text {
+        color: #444;
+      }
+      .inputContainer {
+        margin-bottom: 0;
+        & > div:nth-child(4) {
+          display: none;
+        }
+      }
+    }
+
+    //Only Emudeck
+    .description {
+      grid-area: description;
+      color: #fff;
+      max-width: 94vw;
+      width: 100%;
+      margin: 0 auto;
+      overflow: hidden;
+      h1 {
+        line-height: 1.25;
+        margin-top: 0;
+        margin: var(--margin-markdown-hx);
+        padding-bottom: 0.3em;
+        font-size: var(--font-markdown-h1);
+        font-family: var(--font-family-markdown-h1);
+        color: var(--color-markdown-h1);
+      }
+      p {
+        color: var(--color-markdown-text);
+      }
+    }
+
+    markdown {
+      display: none;
+    }
+
+    .userExceptions {
+      max-width: 94vw;
+      width: 100%;
+      margin: 0 auto;
+      .addItem {
+        display: none;
+      }
+      label {
+        display: none;
+      }
+      label + div {
+        display: block;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      > div > div {
+        margin-bottom: 16px;
+        // max-width: 40vw;
+        width: 100%;
+      }
+    }
+
+    .menu {
+      display: flex;
+      justify-content: end;
+      padding: 28px;
+      background: transparent;
+      border: 0;
+      nav-link {
+        margin: 0 0.25em;
+        @include button();
+        @include clickButtonColor(click-button);
+      }
+    }
+  }
+  &.EmuDeck.EmuDeck log {
+    grid-template-areas:
+      "options messages bugreport"
+      "options messages bugreport"
+      "menu menu menu";
+    .menu {
+      margin: 0;
+      padding: 28px;
+      border: 0;
+      justify-content: end;
+      background: transparent;
+    }
+    .messages {
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    .bugreportdocs {
+      display: none;
+    }
+  }
+  &.EmuDeck.EmuDeck preview {
+    // grid-template-areas:  "lowerMenu" "upperMenu" "entries";
+    // grid-template-rows: auto  auto 1fr;
+    position: relative;
+
+    .excludes {
+      grid-area: lowerMenu;
+      box-sizing: border-box;
+      padding: 28px;
+      background: var(--color-preview-menu-background);
+      border: 0;
+      .buttonGroup {
+        margin-right: 0;
+        .dangerousButton + .excludeButton {
+          margin-right: 0 !important;
+        }
+      }
+    }
+
+    .preview-description {
+      padding: 0;
+      padding-top: 30px;
+    }
+
+    .entries {
+      background: var(--color-preview-menu-background) !important;
+      z-index: 2;
+    }
+    .lowerMenu {
+      justify-content: end;
+      padding: 28px;
+      background: var(--color-preview-menu-background);
+      border: 0;
+    }
+  }
+  &.EmuDeck.EmuDeck settings {
+    grid-template-areas: "settings settings" "menu menu";
+    markdown {
+      display: none;
+    }
+
+    .settings {
+      padding: 0;
+      margin-top: 30px;
+
+      .inputContainer {
+        padding-left: 0;
+      }
+
+      .section {
+        margin: 0;
+      }
+      label {
+        font-size: 50px;
+        font-weight: bold;
+        color: #fff;
+      }
+    }
+    .menu {
+      display: none;
+    }
+  }
+  --ng-select-padding: 10px 20px; //
+  --ng-select-radius: 4px; //
+  --ng-select-margin: var(--margin-input-text); //
+  --font-weight-nested-form-label: normal; //
+  --font-transform-nested-form-label: uppercase; //
+  --font-size-nested-form-label: 14px; //
+  --color-nav-background: #32353d; //
+}
+
+.Deck {
+  .only-emudeck {
+    display: none !important;
+  }
+  .only-deck {
+    display: block !important;
+  }
+  .not-deck {
+    display: none !important;
+  }
+  .previewSpinner {
+    margin-left: calc(0.5 * (100vw - var(--nav-width)) - 2.5em);
+  }
+  ng-text-input,
+  ng-bubbles,
+  ng-select {
+    &.required,
+    &.missing,
+    &.filled {
+      .display {
+        border: 0;
+      }
+    }
+    &.required {
+      border-left: 4px solid var(--color--required) !important;
+    }
+    &.missing {
+      border-left: 4px solid var(--color--missing) !important;
+    }
+    &.filled {
+      border-left: 4px solid var(--color--filled) !important;
+    }
+  }
+  --ng-select-padding: 10px 20px; //
+  --ng-select-radius: 4px; //
+  --ng-select-margin: var(--margin-input-text); //
+  --font-weight-nested-form-label: normal; //
+  --font-transform-nested-form-label: uppercase; //
+  --font-size-nested-form-label: 14px; //
+  .only-deck {
+    display: block;
+  }
+  .appOverlay {
+    outline: 2px solid var(--color-preview-user-background);
+    opacity: 0;
+    transition: 0.5s;
+    &:hover {
+      opacity: 1;
+    }
+
+    .imageSelector {
+      polyline {
+        stroke-width: var(--select-arrow-left-width, 55);
+      }
+    }
+    & > .appInfo > div.imageIndex {
+      text-align: right !important;
+      padding: 6px 8px 0 0 !important;
+      font-size: calc(var(--preview-image-size) * 3em) !important;
+    }
+    .appButtons {
+      display: flex;
+      width: 100%;
+    }
+    .btn {
+      @include button();
+      @include clickButtonColor(click-button);
+      display: initial;
+      padding: 5px;
+      flex: 1;
+      font-size: 12px;
+      border-radius: 0;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.8);
+
+      &:hover {
+        color: var(--color-click-button-text-hover);
+        border-color: var(--color-click-button-border-hover);
+        background-color: var(--color-click-button-background-hover);
+
+        fill: var(--color-click-button-text-hover);
+      }
+
+      &:active {
+        color: var(--color-click-button-text-active);
+        border-color: var(--color-click-button-border-active);
+        background-color: var(--color-click-button-background-active);
+
+        fill: var(--color-click-button-text-active);
+      }
+      img {
+        display: none !important;
+      }
+    }
+  }
+}

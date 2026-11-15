@@ -1,0 +1,1316 @@
+import {
+  Component,
+  ChangeDetectionStrategy,
+  HostBinding,
+  ViewChild,
+  ChangeDetectorRef,
+  OnDestroy,
+  Renderer2,
+  ElementRef,
+  RendererStyleFlags2,
+} from "@angular/core";
+import { Subscription } from "rxjs";
+import {
+  ParsersService,
+  PreviewService,
+  SettingsService,
+  ImageProviderService,
+  UserExceptionsService,
+} from "../services";
+import {
+  PreviewData,
+  PreviewDataApp,
+  PreviewDataApps,
+  PreviewVariables,
+  AppSettings,
+  ImageContent,
+  SelectItem,
+  ArtworkViewType,
+  ArtworkType,
+  isArtworkType,
+  ImageProviderType,
+  ProviderCategoryType,
+  GameException,
+  SteamList,
+} from "../../models";
+import { APP } from "../../variables";
+import {
+  artworkTypes,
+  artworkViewTypes,
+  artworkViewNames,
+  artworkDimsDict,
+} from "../../lib/artwork-types";
+import {
+  superTypes,
+  ArtworkOnlyType,
+  superTypesMap,
+} from "../../lib/parsers/available-parsers";
+import { FuzzyTestPipe, IntersectionTestPipe } from "../pipes";
+import { encodeFile } from "../../lib/helpers/url/file-url";
+import * as FileSaver from "file-saver";
+import * as steam from "../../lib/helpers/steam/generate-app-id";
+import { COMPAT_NONE } from "../../lib/helpers/steam/compat-constants";
+import type { CompatToolInfo } from "../../lib/helpers/steam/compat-constants";
+import * as _ from "lodash";
+import {
+  allProviders,
+  imageProviderNames,
+  providerCategories,
+  sgdbIdRegex,
+} from "../../lib/image-providers/available-providers";
+import { DomSanitizer } from "@angular/platform-browser";
+import { CoreClientService } from "../services/core-client.service";
+import { searchQuery } from "../../core/exceptions-format";
+import type { ExceptionChanges } from "../../core/exceptions-store";
+@Component({
+  selector: "preview",
+  templateUrl: "../templates/preview.component.html",
+  styleUrls: ["../styles/preview.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class PreviewComponent implements OnDestroy {
+  previewData: PreviewData;
+  appSettings: AppSettings;
+  subscriptions: Subscription = new Subscription();
+  previewVariables: PreviewVariables;
+  missingArtFilter: boolean = false;
+  exceptionFilter: boolean = false;
+  showFilters: boolean = false;
+  filterValue: string = "";
+  categoryFilter: string[] = [];
+  allCategories: string[] = [];
+  actualCategoryFilter: string[] = [];
+  parserFilter: string[] = [];
+  allParsers: string[] = [];
+  actualParserFilter: string[] = [];
+  artworkSelectTypes: SelectItem[];
+  sortBySelectTypes: SelectItem[];
+  scrollingEntries: boolean = false;
+  currentApp: {
+    app: PreviewDataApp;
+    userId: string;
+    steamDirectory: string;
+    appId: string;
+  };
+  listImagesArtworkType: ArtworkType = "tall";
+  listImagesRanges: { [k: string]: { start: number; end: number } };
+  private composedBackgroundCache: { [key: string]: string } = {};
+  listSortBy: string = "extractedTitle";
+  showListImages: boolean = false;
+  detailsApp: {
+    app: PreviewDataApp;
+    userId: string;
+    steamDirectory: string;
+    appId: string;
+  };
+  matchFix: string = "";
+  matchFixIds: string[] = [];
+  matchFixDict: { [sgdbId: string]: { name: string; posterUrl: string } };
+  detailsLoading: boolean = true;
+  showDetails: boolean = false;
+  detailsSearchText: string = "";
+  // The details pane's working copy of the game's exception.
+  detailsException: ExceptionChanges;
+  private detailsOriginal = "";
+  detailsOriginalExcludeArt: boolean = false;
+  detailsOriginalCompatTool: string = "";
+  // Options for the per-game "Force compatibility tool" override in the details
+  // panel. "" = inherit the parser default; COMPAT_NONE = opt this game out.
+  compatToolOptions: { displayValue: string; value: string }[] = [];
+  hideDetailsPerApp: boolean = false;
+
+  showExcludes: boolean = false;
+  excludedAppIds: SteamList<{ [appId: string]: boolean }> = {};
+  excludePutBacks: { [exclusionId: string]: boolean } = {};
+  exclusionCount: number = 0;
+
+  constructor(
+    private previewService: PreviewService,
+    private parsersService: ParsersService,
+    private settingsService: SettingsService,
+    private imageProviderService: ImageProviderService,
+    private userExceptionsService: UserExceptionsService,
+    private changeDetectionRef: ChangeDetectorRef,
+    private renderer: Renderer2,
+    private elementRef: ElementRef,
+    private fuzzyTest: FuzzyTestPipe,
+    private intersectionTest: IntersectionTestPipe,
+    private sanitizer: DomSanitizer,
+    private coreClient: CoreClientService,
+  ) {
+    this.previewData = this.previewService.getPreviewData();
+    this.previewVariables = this.previewService.getPreviewVariables();
+    if (this.previewService.getPreviewData()) {
+      this.allCategories = this.previewService.getAllCategories();
+      this.allParsers = this.previewService.getAllParsers();
+      this.previewData = this.previewService.getPreviewData();
+    }
+    this.appSettings = this.settingsService.getSettings();
+    this.artworkSelectTypes = artworkViewTypes.map(
+      (artworkViewType: ArtworkViewType) => {
+        return {
+          value: artworkViewType,
+          displayValue: artworkViewNames[artworkViewType],
+        };
+      },
+    );
+    this.sortBySelectTypes = [
+      {
+        value: "extractedTitle",
+        displayValue: this.lang.sortBy.extractedTitle,
+      },
+      { value: "title", displayValue: this.lang.sortBy.title },
+      {
+        value: "configurationTitle",
+        displayValue: this.lang.sortBy.configurationTitle,
+      },
+      { value: "sortAsTitle", displayValue: this.lang.sortBy.sortAsTitle },
+    ];
+  }
+
+  showFullPreview = false;
+
+  @HostBinding("class.importer-mode") get importerMode() {
+    return !this.showFullPreview;
+  }
+  includeExisting = false;
+  importQuery = "";
+  importParser = "";
+  importExisting = "all";
+  readonly loadedCovers = new Set<string>();
+  readonly failedCovers = new Set<string>();
+
+  get visibleImportGames() {
+    const query = this.importQuery.trim().toLocaleLowerCase();
+    return this.importGames.filter(app =>
+      app.title.toLocaleLowerCase().includes(query)
+      && (!this.importParser || app.configurationTitle === this.importParser)
+      && (this.importExisting === "all" || Boolean(app.alreadyInSteam) === (this.importExisting === "existing")));
+  }
+
+  get importParserNames() {
+    return [...new Set(this.importGames.map(app => app.configurationTitle))];
+  }
+  importing = false;
+  @ViewChild("restartDialog", { static: true }) private restartDialog: ElementRef<HTMLDialogElement>;
+  searching = false;
+  importStatus = "";
+
+  get importGames(): PreviewDataApp[] {
+    return Object.values(this.previewData ?? {}).flatMap(users =>
+      Object.values(users).flatMap(user => Object.values(user.apps)));
+  }
+
+  get selectedImportGames() {
+    return this.importGames.filter(app => app.status === "add");
+  }
+
+  async searchImport() {
+    if (this.importing) return;
+    const ids = this.parsersService.getUserConfigurationsArray()
+      .filter(({ saved }) => !saved.disabled).map(({ saved }) => saved.parserId);
+    if (!ids.length) {
+      this.importStatus = "Activá un parser en la barra lateral para buscar juegos.";
+      return;
+    }
+    this.importing = true;
+    this.searching = true;
+    this.importStatus = "Buscando juegos…";
+    try {
+      await this.previewService.generatePreviewData(ids);
+      this.previewData = this.previewService.getPreviewData();
+      this.selectImportGames(true);
+      if (!this.importParserNames.includes(this.importParser)) this.importParser = "";
+      this.importStatus = this.importGames.length + " juegos encontrados.";
+    } catch (error) {
+      this.importStatus = String(error);
+    } finally {
+      this.searching = false;
+      this.importing = false;
+      this.changeDetectionRef.markForCheck();
+    }
+  }
+
+  selectImportGames(initial = false) {
+    for (const app of this.importGames) {
+      if (app.alreadyInSteam) app.status = this.includeExisting ? "add" : "skip";
+      else if (initial) app.status = "add";
+    }
+  }
+
+  saveImport() {
+    if (this.importing || !this.selectedImportGames.length) return;
+    this.importStatus = "";
+    this.restartDialog.nativeElement.showModal();
+  }
+
+  async queueImport(restart: boolean) {
+    if (this.importing) return;
+    this.importing = true;
+    this.importStatus = "Preparando la importación…";
+    const directory = Object.keys(this.previewData ?? {})[0]
+      ?? this.settingsService.getSettings().environmentVariables.steamDirectory;
+    try {
+      await this.previewService.engine.waitForImages();
+      this.settingsService.push();
+      await this.coreClient.client.call("app", "saveAndRestart", this.previewData,
+        this.previewService.engine.getOnlineImages(), directory, restart);
+      this.restartDialog.nativeElement.close();
+      if (!restart) await this.coreClient.client.call("app", "close");
+      this.importStatus = "Importación pendiente.";
+    } catch (error) {
+      this.importStatus = String(error);
+    } finally {
+      this.importing = false;
+      this.changeDetectionRef.markForCheck();
+    }
+  }
+
+  importCover(app: PreviewDataApp) {
+    return this.previewService.engine.getCurrentImage(app, "tall")?.imageUrl;
+  }
+
+  get lang() {
+    return APP.lang.preview.component;
+  }
+
+  get inViewDict() {
+    return this.previewService.inViewDict;
+  }
+
+  get artworkTypes() {
+    return artworkTypes;
+  }
+
+  get artworkViewNames() {
+    return artworkViewNames;
+  }
+
+  get providerCategories() {
+    return providerCategories;
+  }
+  // Widened from a union of tuple types, which *ngFor can't iterate.
+  get allProviders(): Record<
+    ProviderCategoryType,
+    readonly ImageProviderType[]
+  > {
+    return allProviders;
+  }
+
+  get imageProviderNames() {
+    return imageProviderNames;
+  }
+
+  isArtworkType(artworkViewType: ArtworkViewType) {
+    return isArtworkType(artworkViewType);
+  }
+
+  clearInView() {
+    this.previewService.inViewDict = {};
+  }
+
+  closeAll() {
+    this.closeFilters();
+    this.closeRight();
+  }
+
+  closeRight() {
+    this.closeDetails();
+    this.closeListImages();
+    this.cancelExcludes();
+  }
+
+  // The Parse buttons: a new list, so the category/parser filters start over
+  // (they may name categories and parsers the new list doesn't have).
+  parse() {
+    this.setCategoryFilter([]);
+    this.setParserFilter([]);
+    this.generatePreviewData();
+  }
+
+  generatePreviewData() {
+    this.clearInView();
+    this.closeRight();
+    this.previewService.generatePreviewData();
+  }
+
+  setImageBoxSizes() {
+    const currentViewType = this.previewService.getCurrentViewType();
+    if (isArtworkType(currentViewType)) {
+      this.renderer.setStyle(
+        this.elementRef.nativeElement,
+        "--image-width-max",
+        artworkDimsDict[currentViewType].width,
+        RendererStyleFlags2.DashCase,
+      );
+      this.renderer.setStyle(
+        this.elementRef.nativeElement,
+        "--image-height-max",
+        artworkDimsDict[currentViewType].height,
+        RendererStyleFlags2.DashCase,
+      );
+    }
+  }
+
+  setCategoryFilter(categories: string[]) {
+    this.categoryFilter = categories;
+    this.actualCategoryFilter = categories.map((c) =>
+      c.replace(/&nbsp;/g, " "),
+    );
+  }
+
+  setParserFilter(parsers: string[]) {
+    this.parserFilter = parsers;
+    this.actualParserFilter = parsers.map((p) => p.replace(/&nbsp;/g, " "));
+  }
+
+  setSearchFilter(searchFilter: string) {
+    this.filterValue = searchFilter;
+    this.changeDetectionRef.detectChanges();
+  }
+
+  ngAfterContentInit() {
+    this.setImageSize(this.appSettings.previewSettings.imageZoomPercentage);
+    this.setImageBoxSizes();
+  }
+
+  ngAfterViewInit() {
+    this.subscriptions.add(
+      this.previewService.getPreviewDataChange().subscribe(
+        _.debounce(() => {
+          this.allCategories = this.previewService.getAllCategories();
+          this.allParsers = this.previewService.getAllParsers();
+          this.previewData = this.previewService.getPreviewData();
+          // (filters naming categories/parsers no longer in the list would
+          // hide everything)
+          this.setCategoryFilter(
+            this.categoryFilter.filter((c) => this.allCategories.includes(c)),
+          );
+          this.setParserFilter(
+            this.parserFilter.filter((p) => this.allParsers.includes(p)),
+          );
+          this.changeDetectionRef.detectChanges();
+        }, 50),
+      ),
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
+  }
+
+  getActualArtworkType(artworkType?: ArtworkType): ArtworkType {
+    const currentViewType = this.previewService.getCurrentViewType();
+    return isArtworkType(currentViewType) ? currentViewType : artworkType;
+  }
+  getCurrentViewType() {
+    return this.previewService.getCurrentViewType();
+  }
+
+  setImageType(artworkViewType: ArtworkViewType) {
+    this.previewService.setCurrentViewType(artworkViewType);
+    this.setImageBoxSizes();
+    this.closeListImages();
+    this.changeDetectionRef.detectChanges();
+  }
+
+  // Whether a pool is still loading. A pool can be missing for a moment (a
+  // Fix Match pick, or the list regenerating): that counts as loading, and
+  // must not throw mid change detection.
+  getImagePool(poolKey: string, artworkType?: ArtworkType) {
+    return {
+      retrieving:
+        this.previewService.getImages(artworkType)[poolKey]?.retrieving ?? true,
+    };
+  }
+
+  getAppImages(app: PreviewDataApp, artworkType?: ArtworkType) {
+    const actualArtworkType = this.getActualArtworkType(artworkType);
+    return app.images[actualArtworkType];
+  }
+
+  getBackgroundImage(app: PreviewDataApp, artworkType?: ArtworkType) {
+    return this.previewService.getCurrentImage(app, artworkType);
+  }
+  getBackgroundImageList(
+    app: PreviewDataApp,
+    index: number,
+    artworkType?: ArtworkType,
+  ) {
+    return this.previewService.getImage(app, index, artworkType);
+  }
+
+  setDetailsBackgroundImage(sgdbId: string) {
+    const posterUrl = this.matchFixDict[sgdbId].posterUrl;
+    return posterUrl ? posterUrl : require("../../assets/images/no-images.svg");
+  }
+
+  private normalizeImageUrl(filePath: string) {
+    if (!filePath) {
+      return "";
+    }
+    if (filePath.startsWith("file://")) {
+      return filePath;
+    }
+    if (/^(https?:)?\/\//i.test(filePath)) {
+      return filePath;
+    }
+    return encodeFile(filePath);
+  }
+
+  private wrapBackgroundImage(filePath: string) {
+    const normalizedPath = this.normalizeImageUrl(filePath);
+    return normalizedPath ? `url("${normalizedPath}")` : "";
+  }
+
+  private composeBackgroundImage(
+    baseUrl: string,
+    overlayUrl: string,
+    cacheKey: string,
+  ) {
+    if (this.composedBackgroundCache[cacheKey]) {
+      return;
+    }
+
+    const baseImage = new Image();
+    const overlayImage = new Image();
+    const normalizedBaseUrl = this.normalizeImageUrl(baseUrl);
+    const normalizedOverlayUrl = this.normalizeImageUrl(overlayUrl);
+    let baseLoaded = false;
+    let overlayLoaded = false;
+
+    const finalize = () => {
+      if (!baseLoaded || !overlayLoaded) {
+        return;
+      }
+
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = baseImage.width;
+        canvas.height = baseImage.height;
+        const context = canvas.getContext("2d");
+        if (!context) {
+          return;
+        }
+
+        context.drawImage(baseImage, 0, 0);
+
+        const overlayScale = Math.max(
+          canvas.width / overlayImage.width,
+          canvas.height / overlayImage.height,
+        );
+        const scaledOverlayWidth = overlayImage.width * overlayScale;
+        const scaledOverlayHeight = overlayImage.height * overlayScale;
+
+        context.drawImage(
+          overlayImage,
+          0,
+          0,
+          scaledOverlayWidth,
+          scaledOverlayHeight,
+        );
+
+        this.composedBackgroundCache[cacheKey] =
+          `url("${canvas.toDataURL("image/png")}")`;
+        this.changeDetectionRef.detectChanges();
+      } catch (error) {
+        this.composedBackgroundCache[cacheKey] =
+          this.wrapBackgroundImage(baseUrl);
+      }
+    };
+
+    const onBaseLoad = () => {
+      baseLoaded = true;
+      finalize();
+    };
+    const onOverlayLoad = () => {
+      overlayLoaded = true;
+      finalize();
+    };
+
+    baseImage.onload = onBaseLoad;
+    baseImage.onerror = onBaseLoad;
+    overlayImage.onload = onOverlayLoad;
+    overlayImage.onerror = onOverlayLoad;
+
+    baseImage.src = normalizedBaseUrl;
+    overlayImage.src = normalizedOverlayUrl;
+  }
+
+  setBackgroundImage(
+    appId: string,
+    app: PreviewDataApp,
+    image: ImageContent,
+    artworkType?: ArtworkType,
+    imageIndex?: number,
+    notLazy?: boolean,
+  ) {
+    const currentViewType = this.previewService.getCurrentViewType();
+    const actualArtworkType: ArtworkType =
+      this.getActualArtworkType(artworkType);
+    if (
+      this.appSettings.previewSettings.imageLoadStrategy == "loadLazy" &&
+      !notLazy &&
+      !this.inViewDict[appId + currentViewType]
+    ) {
+      return null;
+    }
+
+    const overlayPath = app.overlayImages?.[actualArtworkType];
+    const overlayBackground = overlayPath
+      ? this.wrapBackgroundImage(overlayPath)
+      : null;
+
+    if (
+      image?.imageProvider !== "Current Artwork" &&
+      overlayPath &&
+      image?.loadStatus === "done"
+    ) {
+      const cacheKey = `${appId}-${actualArtworkType}-${image.imageUrl}-${overlayPath}`;
+      if (!this.composedBackgroundCache[cacheKey]) {
+        this.composeBackgroundImage(image.imageUrl, overlayPath, cacheKey);
+      }
+      return (
+        this.composedBackgroundCache[cacheKey] ||
+        this.wrapBackgroundImage(image.imageUrl)
+      );
+    }
+
+    if (image == undefined) {
+      let imagepool: string = app.images[actualArtworkType].imagePool;
+      // (the pool can be missing for a moment while the list regenerates)
+      const fallbackImage = this.previewService.getImages(actualArtworkType)[
+        imagepool
+      ]?.online
+        ? require("../../assets/images/retrieving-images.svg")
+        : require("../../assets/images/no-images.svg");
+      return overlayBackground
+        ? `${this.wrapBackgroundImage(fallbackImage)}, ${overlayBackground}`
+        : this.wrapBackgroundImage(fallbackImage);
+    } else {
+      if (image.loadStatus === "notStarted") {
+        if (isArtworkType(currentViewType)) {
+          this.loadImage(app);
+        } else {
+          this.loadImage(app, artworkType, imageIndex);
+        }
+        const downloadingImage = require("../../assets/images/downloading-image.svg");
+        return overlayBackground
+          ? `${this.wrapBackgroundImage(downloadingImage)}, ${overlayBackground}`
+          : this.wrapBackgroundImage(downloadingImage);
+      } else if (image.loadStatus === "downloading") {
+        const downloadingImage = require("../../assets/images/downloading-image.svg");
+        return overlayBackground
+          ? `${this.wrapBackgroundImage(downloadingImage)}, ${overlayBackground}`
+          : this.wrapBackgroundImage(downloadingImage);
+      } else if (image.loadStatus === "done") {
+        const baseImage = this.wrapBackgroundImage(image.imageUrl);
+        return overlayBackground
+          ? `${baseImage}, ${overlayBackground}`
+          : baseImage;
+      } else {
+        const failedImage = require("../../assets/images/failed-image-download.svg");
+        return overlayBackground
+          ? `${this.wrapBackgroundImage(failedImage)}, ${overlayBackground}`
+          : this.wrapBackgroundImage(failedImage);
+      }
+    }
+  }
+
+  loadImage(
+    app: PreviewDataApp,
+    artworkType?: ArtworkType,
+    imageIndex?: number,
+  ) {
+    this.previewService.loadImage(app, artworkType, imageIndex);
+  }
+
+  areImagesAvailable(app: PreviewDataApp, artworkType?: ArtworkType) {
+    return this.previewService.areImagesAvailable(app, artworkType);
+  }
+
+  currentImageIndex(app: PreviewDataApp, artworkType?: ArtworkType) {
+    const actualArtworkType = this.getActualArtworkType(artworkType);
+    return app.images[actualArtworkType].imageIndex + 1;
+  }
+
+  maxImageIndex(app: PreviewDataApp, artworkType?: ArtworkType) {
+    return this.previewService.getTotalLengthOfImages(app, artworkType);
+  }
+
+  updateListImageRanges(app?: PreviewDataApp) {
+    if (this.currentApp || app) {
+      const rangesApp = app ? app : this.currentApp.app;
+      this.listImagesRanges = this.previewService.getRanges(
+        rangesApp,
+        this.listImagesArtworkType,
+      );
+      this.changeDetectionRef.detectChanges();
+    }
+  }
+
+  async addLocalImages(app: PreviewDataApp, artworkType?: ArtworkType) {
+    const options = {
+      properties: ["multiSelections", "openFile"],
+      title: this.lang.addLocalImagesDialog.title,
+      filters: [
+        {
+          name: this.lang.addLocalImagesDialog.imagesFilter,
+          extensions: ["png", "tga", "jpg", "jpeg", "webp"],
+        },
+      ],
+    };
+    const actualArtworkType = this.getActualArtworkType(artworkType);
+    const { filePaths }: { filePaths: string[] } =
+      await this.coreClient.client.call("app", "openDialog", options);
+    if (filePaths !== undefined) {
+      let extRegex = /png|tga|jpg|jpeg|webp/i;
+      for (let i = 0; i < filePaths.length; i++) {
+        const extension = filePaths[i].match(/\.[^.\\/]*$/)?.[0] ?? "";
+        if (extRegex.test(extension)) {
+          let imageUrl = encodeFile(filePaths[i]);
+          this.previewService.addUniqueLocalImage(
+            app.images[actualArtworkType].imagePool,
+            {
+              imageProvider: imageProviderNames.manual,
+              imageUrl: imageUrl,
+              loadStatus: "done",
+            },
+            actualArtworkType,
+            "manual",
+          );
+          this.updateListImageRanges(app);
+          this.previewService.setImageIndex(
+            app,
+            this.listImagesRanges["manual"].end - 1,
+            actualArtworkType,
+            true,
+          );
+        }
+      }
+    }
+  }
+
+  stopImageRetrieving() {
+    this.imageProviderService.instance.stopUrlDownload();
+  }
+
+  save() {
+    return this.previewService.saveData({ removeAll: false, batchWrite: true });
+  }
+
+  async remove() {
+    if (await this.previewService.removeAllInPreview()) {
+      this.closeAll();
+    }
+  }
+
+  closeFilters() {
+    this.showFilters = false;
+    this.renderer.setStyle(
+      this.elementRef.nativeElement,
+      "--filters-width",
+      "0%",
+      RendererStyleFlags2.DashCase,
+    );
+  }
+
+  openFilters() {
+    this.showFilters = true;
+    this.renderer.setStyle(
+      this.elementRef.nativeElement,
+      "--filters-width",
+      "300px",
+      RendererStyleFlags2.DashCase,
+    );
+  }
+
+  toggleFilters() {
+    if (this.showFilters) {
+      this.closeFilters();
+    } else {
+      this.openFilters();
+    }
+    this.changeDetectionRef.detectChanges();
+  }
+
+  toggleDetailsPerApp() {
+    this.hideDetailsPerApp = !this.hideDetailsPerApp;
+    this.changeDetectionRef.detectChanges();
+  }
+
+  setArtFilter(artFilter: boolean) {
+    this.missingArtFilter = artFilter;
+    this.changeDetectionRef.detectChanges();
+  }
+
+  setExceptionFilter(exceptionFilter: boolean) {
+    this.exceptionFilter = exceptionFilter;
+    this.changeDetectionRef.detectChanges();
+  }
+
+  updateDOM() {
+    this.changeDetectionRef.detectChanges();
+  }
+
+  searchMatches(searchTitle: string) {
+    this.previewService.getMatchFixes(searchTitle).then((games: any[]) => {
+      this.matchFixDict = Object.fromEntries(
+        games.map((x: any) => [
+          x.id.toString(),
+          { name: x.name, posterUrl: x.posterUrl },
+        ]),
+      );
+      this.matchFixIds = games.map((x: any) => x.id.toString());
+      this.detailsLoading = false;
+      this.changeDetectionRef.detectChanges();
+    });
+  }
+  searchForDetails() {
+    if (this.detailsSearchText) {
+      this.searchMatches(this.detailsSearchText);
+    }
+  }
+  changeAppDetails(
+    app: PreviewDataApp,
+    steamDirectory: string,
+    userId: string,
+    appId: string,
+  ) {
+    this.clearDetails();
+    this.cancelExcludes();
+    this.closeListImages();
+    this.detailsLoading = true;
+    this.showDetails = true;
+    this.renderer.setStyle(
+      this.elementRef.nativeElement,
+      "--details-width",
+      "50%",
+      RendererStyleFlags2.DashCase,
+    );
+    this.changeDetectionRef.detectChanges();
+    const exceptionId = this.userExceptionsService.makeExceptionId(
+      app.executableLocation,
+      app.extractedTitle,
+      app.parserType,
+    );
+    const existingException = this.userExceptionsService.exceptionFor(
+      exceptionId,
+      app.extractedTitle,
+    );
+    this.detailsException = {
+      newTitle: existingException?.newTitle ?? "",
+      searchTitle: existingException?.searchTitle ?? "",
+      sgdbId: existingException?.sgdbId ?? "",
+      commandLineArguments: existingException?.commandLineArguments ?? "",
+      excludeArtwork: existingException?.excludeArtwork ?? false,
+      compatToolName: existingException?.compatToolName,
+    };
+    this.detailsOriginalExcludeArt = existingException
+      ? existingException.excludeArtwork
+      : false;
+    // "" (inherit) is the select's neutral value; coerce a legacy/undefined
+    // override to it so the dropdown has a matching option.
+    if (this.detailsException.compatToolName === undefined) {
+      this.detailsException.compatToolName = "";
+    }
+    this.detailsOriginalCompatTool = this.detailsException.compatToolName;
+    this.detailsOriginal = JSON.stringify(this.detailsException);
+    this.coreClient.client
+      .call("support", "compatTools", [steamDirectory])
+      .then((tools: CompatToolInfo[]) => {
+        this.compatToolOptions = [
+          { displayValue: this.lang.details.compatInherit, value: "" },
+          { displayValue: this.lang.details.compatNone, value: COMPAT_NONE },
+          ...tools.map((t) => ({ displayValue: t.displayName, value: t.name })),
+        ];
+        this.changeDetectionRef.detectChanges();
+      });
+    this.detailsApp = {
+      appId: appId,
+      app: app,
+      steamDirectory: steamDirectory,
+      userId: userId,
+    };
+    this.searchMatches(this.detailsApp.app.extractedTitle);
+  }
+
+  fixMatchSearch(sgdbId: string) {
+    this.detailsException.sgdbId = sgdbId;
+  }
+
+  fixMatchTitle(sgdbId: string) {
+    this.detailsException.newTitle = this.matchFixDict[sgdbId].name;
+  }
+
+  fixMatch(sgdbId: string) {
+    this.matchFix = sgdbId;
+    this.fixMatchSearch(sgdbId);
+    this.fixMatchTitle(sgdbId);
+  }
+
+  clearDetails() {
+    this.detailsSearchText = "";
+    this.matchFix = "";
+    this.detailsException = undefined;
+    this.detailsApp = undefined;
+  }
+  closeDetails() {
+    this.clearDetails();
+    this.showDetails = false;
+    this.renderer.setStyle(
+      this.elementRef.nativeElement,
+      "--details-width",
+      "0%",
+      RendererStyleFlags2.DashCase,
+    );
+    this.detailsLoading = false;
+    this.changeDetectionRef.detectChanges();
+  }
+
+  openListImages(
+    app: PreviewDataApp,
+    steamDir: string,
+    userId: string,
+    appId: string,
+  ) {
+    this.closeDetails();
+    this.cancelExcludes();
+    this.showListImages = true;
+    this.renderer.setStyle(
+      this.elementRef.nativeElement,
+      "--list-images-width",
+      "50%",
+      RendererStyleFlags2.DashCase,
+    );
+    this.currentApp = {
+      app: app,
+      appId: appId,
+      steamDirectory: steamDir,
+      userId: userId,
+    };
+    this.updateListImageRanges();
+    this.changeDetectionRef.detectChanges();
+  }
+  closeListImages() {
+    this.showListImages = false;
+    this.renderer.setStyle(
+      this.elementRef.nativeElement,
+      "--list-images-width",
+      "0%",
+      RendererStyleFlags2.DashCase,
+    );
+  }
+  changeListImagesArtworkType(artworkType: ArtworkType) {
+    this.listImagesArtworkType = artworkType;
+    this.updateListImageRanges();
+    this.changeDetectionRef.detectChanges();
+  }
+
+  deleteExceptionDetails() {
+    if (this.detailsApp) {
+      const { steamDirectory, userId, appId, app } = this.detailsApp;
+      const exceptionId = this.userExceptionsService.makeExceptionId(
+        app.executableLocation,
+        app.extractedTitle,
+        app.parserType,
+      );
+      this.userExceptionsService.deleteGameException(exceptionId);
+      this.refreshAfterSavingDetails(steamDirectory, userId, appId);
+      this.closeDetails();
+      this.generatePreviewData();
+    }
+  }
+
+  saveDetails() {
+    if (this.detailsApp) {
+      const { steamDirectory, userId, appId, app } = this.detailsApp;
+      // The compat tool select resets "" (inherit) to null when its options
+      // arrive; null would fail validation and lose the whole edit.
+      this.detailsException.compatToolName ||= "";
+      const { newTitle, commandLineArguments, excludeArtwork, compatToolName } =
+        this.detailsException;
+      // What the artwork providers search for (a Fix Match pick first).
+      const searchTitle = searchQuery(this.detailsException as GameException);
+      if (newTitle) {
+        this.previewData[steamDirectory][userId].apps[appId].title = newTitle;
+        if (superTypesMap[app.parserType] !== "ArtworkOnly") {
+          const changedId = steam.generateAppId(
+            app.executableLocation,
+            newTitle,
+          );
+          this.previewData[steamDirectory][userId].apps[appId].changedId =
+            changedId;
+        }
+      }
+      if (commandLineArguments) {
+        this.previewData[steamDirectory][userId].apps[appId].argumentString =
+          commandLineArguments;
+      }
+      // Live-apply a chosen override ("" = inherit, left to the next generation).
+      if (compatToolName !== "") {
+        this.previewData[steamDirectory][userId].apps[appId].compatToolName =
+          compatToolName;
+      }
+      if (searchTitle && !excludeArtwork) {
+        for (const artworkType of artworkTypes) {
+          const oldPool =
+            this.previewData[steamDirectory][userId].apps[appId].images[
+              artworkType
+            ].imagePool;
+          this.previewData[steamDirectory][userId].apps[appId].images[
+            artworkType
+          ].imagePool = searchTitle;
+          this.previewData[steamDirectory][userId].apps[appId].images[
+            artworkType
+          ].singleProviders.steam = undefined;
+          this.previewService.updateAppImages(
+            searchTitle,
+            oldPool,
+            artworkType,
+          );
+        }
+      }
+      if (excludeArtwork != this.detailsOriginalExcludeArt) {
+        for (const artworkType of artworkTypes) {
+          this.previewService.updateLocalArtworkOnly(
+            searchTitle,
+            artworkType,
+            excludeArtwork,
+          );
+        }
+      }
+      // Saved for this game (by app id) whenever anything changed; with no
+      // changes left, its exception is removed.
+      if (JSON.stringify(this.detailsException) !== this.detailsOriginal) {
+        const exceptionId = this.userExceptionsService.makeExceptionId(
+          app.executableLocation,
+          app.extractedTitle,
+          app.parserType,
+        );
+        this.userExceptionsService.setGameException(
+          exceptionId,
+          app.extractedTitle,
+          {
+            ...this.detailsException,
+            // "" (inherit) persists as undefined so it does not override.
+            compatToolName: compatToolName !== "" ? compatToolName : undefined,
+          },
+        );
+        this.refreshAfterSavingDetails(steamDirectory, userId, appId);
+      }
+      this.closeDetails();
+    }
+  }
+
+  private refreshAfterSavingDetails(
+    steamDirectory: string,
+    userId: string,
+    appId: string,
+  ) {
+    if (!isArtworkType(this.previewService.getCurrentViewType())) {
+      for (const artworkType of artworkTypes) {
+        this.refreshImages(
+          this.previewData[steamDirectory][userId].apps[appId],
+          artworkType,
+        );
+      }
+    } else {
+      this.refreshImages(this.previewData[steamDirectory][userId].apps[appId]);
+    }
+  }
+
+  excludeAppId(
+    steamDirectory: string,
+    userId: string,
+    appId: string,
+    override?: boolean,
+  ) {
+    if (this.showExcludes) {
+      if (!this.excludedAppIds[steamDirectory]) {
+        this.excludedAppIds[steamDirectory] = {};
+      }
+      if (!this.excludedAppIds[steamDirectory][userId]) {
+        this.excludedAppIds[steamDirectory][userId] = {};
+      }
+      if (override === undefined) {
+        if (this.excludedAppIds[steamDirectory][userId][appId]) {
+          this.excludedAppIds[steamDirectory][userId][appId] = false;
+          this.exclusionCount -= 1;
+        } else {
+          this.excludedAppIds[steamDirectory][userId][appId] = true;
+          this.exclusionCount += 1;
+        }
+      } else {
+        if (!override != !this.excludedAppIds[steamDirectory][userId][appId]) {
+          this.exclusionCount += override ? 1 : -1;
+        }
+        this.excludedAppIds[steamDirectory][userId][appId] = override;
+      }
+    }
+  }
+
+  isAppVisible(app: PreviewDataApp) {
+    const searchFilter = this.fuzzyTest.transform(app.title, this.filterValue);
+    const categoryFilter = this.intersectionTest.transform(
+      app.steamCategories,
+      this.actualCategoryFilter,
+    );
+    const configFilter = this.intersectionTest.transform(
+      [app.configurationTitle],
+      this.actualParserFilter,
+    );
+    let missingArtFilter = true;
+    if (this.missingArtFilter) {
+      const currentViewType = this.previewService.getCurrentViewType();
+      if (isArtworkType(currentViewType)) {
+        missingArtFilter = !this.previewService.getCurrentImage(app);
+      } else {
+        missingArtFilter = artworkTypes
+          .map((t) => !this.previewService.getCurrentImage(app, t))
+          .reduce((x, y) => x || y);
+      }
+    }
+    let exceptionFilter = true;
+    if (this.exceptionFilter) {
+      const exceptionId = this.userExceptionsService.makeExceptionId(
+        app.executableLocation,
+        app.extractedTitle,
+        app.parserType,
+      );
+      exceptionFilter = !!this.userExceptionsService.exceptionFor(
+        exceptionId,
+        app.extractedTitle,
+      );
+    }
+    const excludesArtOnlyFilter =
+      !this.showExcludes || superTypesMap[app.parserType] !== "ArtworkOnly";
+    return (
+      searchFilter &&
+      categoryFilter &&
+      configFilter &&
+      missingArtFilter &&
+      exceptionFilter &&
+      excludesArtOnlyFilter
+    );
+  }
+
+  excludeVisible() {
+    for (let steamDirectory in this.previewData) {
+      for (let userId in this.previewData[steamDirectory]) {
+        for (let appId in this.previewData[steamDirectory][userId].apps) {
+          if (
+            this.isAppVisible(
+              this.previewData[steamDirectory][userId].apps[appId],
+            )
+          ) {
+            this.excludeAppId(steamDirectory, userId, appId, true);
+          }
+        }
+      }
+    }
+  }
+
+  includeVisible() {
+    for (let steamDirectory in this.previewData) {
+      for (let userId in this.previewData[steamDirectory]) {
+        for (let appId in this.previewData[steamDirectory][userId].apps) {
+          if (
+            this.isAppVisible(
+              this.previewData[steamDirectory][userId].apps[appId],
+            )
+          ) {
+            this.excludeAppId(steamDirectory, userId, appId, false);
+          }
+        }
+      }
+    }
+  }
+
+  showExclusions() {
+    this.closeDetails();
+    this.closeListImages();
+    this.renderer.setStyle(
+      this.elementRef.nativeElement,
+      "--excludes-lower-width",
+      "50%",
+      RendererStyleFlags2.DashCase,
+    );
+    this.showExcludes = true;
+    for (const steamDir in this.previewData) {
+      for (const steamUser in this.previewData[steamDir]) {
+        for (const exclusion of this.previewData[steamDir][steamUser]
+          .excluded) {
+          this.excludePutBacks[exclusion.exclusionId] = false;
+        }
+      }
+    }
+  }
+
+  cancelExcludes() {
+    this.showExcludes = false;
+    this.renderer.setStyle(
+      this.elementRef.nativeElement,
+      "--excludes-lower-width",
+      "0%",
+      RendererStyleFlags2.DashCase,
+    );
+    this.excludedAppIds = {};
+    this.exclusionCount = 0;
+  }
+
+  // Excludes the marked games (by app id; any changes saved for them stay,
+  // for when they're put back) and puts back the marked exclusions.
+  saveExcludes() {
+    const games: { appId: string; appTitle: string }[] = [];
+    for (const steamDirectory in this.excludedAppIds) {
+      for (const userId in this.excludedAppIds[steamDirectory]) {
+        for (const [appId, excluded] of Object.entries(
+          this.excludedAppIds[steamDirectory][userId],
+        )) {
+          const app = this.previewData[steamDirectory]?.[userId]?.apps[appId];
+          if (excluded && app) {
+            games.push({
+              appId: this.userExceptionsService.makeExceptionId(
+                app.executableLocation,
+                app.extractedTitle,
+                app.parserType,
+              ),
+              appTitle: app.extractedTitle,
+            });
+          }
+        }
+      }
+    }
+    if (games.length) {
+      this.userExceptionsService.exclude(games);
+    }
+    const putBacks = Object.keys(this.excludePutBacks).filter(
+      (id) => this.excludePutBacks[id],
+    );
+    if (putBacks.length) {
+      this.userExceptionsService.removeExclusions(putBacks);
+    }
+    this.excludePutBacks = {};
+    this.cancelExcludes();
+    this.generatePreviewData();
+  }
+
+  putBackSetAll(putBack: boolean) {
+    for (const putBackKey in this.excludePutBacks) {
+      this.excludePutBacks[putBackKey] = putBack;
+    }
+    this.changeDetectionRef.detectChanges();
+  }
+
+  refreshImages(app: PreviewDataApp, artworkType?: ArtworkType) {
+    if (!isArtworkType(this.previewService.getCurrentViewType())) {
+      this.previewService.downloadImageUrls(artworkType, [
+        app.images[artworkType].imagePool,
+      ]);
+    } else {
+      //TODO why are we refreshing all artwork types here
+      for (const artworkType of artworkTypes) {
+        this.previewService.downloadImageUrls(artworkType, [
+          app.images[artworkType].imagePool,
+        ]);
+      }
+    }
+  }
+
+  saveImage(image: ImageContent, title: string) {
+    FileSaver.saveAs(image.imageUrl, title.replace(/[/\\?%*:|"<>]/g, "-"));
+  }
+
+  previousImage(app: PreviewDataApp, artworkType?: ArtworkType) {
+    const actualArtworkType = this.getActualArtworkType(artworkType);
+    this.previewService.setImageIndex(
+      app,
+      app.images[actualArtworkType].imageIndex - 1,
+      actualArtworkType,
+    );
+  }
+
+  nextImage(app: PreviewDataApp, artworkType?: ArtworkType) {
+    const actualArtworkType = this.getActualArtworkType(artworkType);
+    this.previewService.setImageIndex(
+      app,
+      app.images[actualArtworkType].imageIndex + 1,
+      actualArtworkType,
+    );
+  }
+
+  chooseImage(
+    app: PreviewDataApp,
+    imageIndex: number,
+    artworkType?: ArtworkType,
+  ) {
+    const actualArtworkType = this.getActualArtworkType(artworkType);
+    this.previewService.setImageIndex(app, imageIndex, actualArtworkType);
+  }
+
+  setImageSizeFromInput(target: EventTarget | null, save: boolean = false) {
+    if (!target) return;
+    this.setImageSize(Number((target as HTMLInputElement).value), save);
+  }
+
+  private setImageSize(value: number, save: boolean = false) {
+    if (this.elementRef && this.elementRef.nativeElement) {
+      if (typeof value === "string") {
+        value = parseFloat(value);
+      }
+      value = Math.min(Math.max(value, 30), 100);
+      this.appSettings.previewSettings.imageZoomPercentage = value;
+      if (save) {
+        this.settingsService.saveAppSettings();
+      }
+      this.renderer.setStyle(
+        this.elementRef.nativeElement,
+        "--preview-image-size",
+        value / 100,
+        RendererStyleFlags2.DashCase,
+      );
+    }
+  }
+
+  onScrollEnd = _.debounce(() => {
+    this.scrollingEntries = false;
+    this.changeDetectionRef.detectChanges();
+  }, 150);
+
+  onScroll() {
+    this.scrollingEntries = true;
+    this.onScrollEnd();
+  }
+
+  sortedAppIds(apps: PreviewDataApps) {
+    return Object.keys(apps).sort((a, b) => {
+      let aValue = apps[a][this.listSortBy as keyof PreviewDataApp] as string;
+      let bValue = apps[b][this.listSortBy as keyof PreviewDataApp] as string;
+
+      // fall back to title to avoid sorting by "" when sorting by sortAsTitle
+      if (this.listSortBy == "sortAsTitle") {
+        if (!aValue) aValue = apps[a].title;
+        if (!bValue) bValue = apps[b].title;
+      }
+
+      return aValue.localeCompare(bValue);
+    });
+  }
+
+  niceAppTitle(app: PreviewDataApp) {
+    if (superTypesMap[app.parserType] == "ArtworkOnly") {
+      return app.title;
+    }
+    return `${app.title} (${app.filePath})`;
+  }
+
+  async exportSelection() {
+    await this.previewService.exportSelection();
+  }
+
+  async importSelection() {
+    await this.previewService.importSelection();
+    this.updateListImageRanges();
+  }
+}

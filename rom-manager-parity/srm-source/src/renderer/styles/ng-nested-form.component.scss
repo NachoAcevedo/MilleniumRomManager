@@ -1,0 +1,125 @@
+@import "mixins";
+
+ng-nested-form {
+  &.nested {
+    background-color: transparent;
+  }
+
+  .container {
+    display: grid;
+
+    margin: 0.5em 0 0.5em 0;
+
+    &.nested {
+      margin: 0;
+    }
+
+    grid-template-areas:
+      "label label"
+      "input button"
+      "error error";
+    grid-template-columns: 1fr auto;
+
+    label {
+      display: flex;
+
+      margin: 0 0 0.35em 0;
+      font-weight: var(--font-weight-nested-form-label);
+      text-transform: var(--font-transform-nested-form-label);
+      font-size: var(--font-size-nested-form-label);
+      color: var(--color-nested-form-label);
+
+      align-items: center;
+      grid-area: label;
+
+      .infoButton {
+        margin: var(--margin-info-button);
+        order: var(--order-info-button);
+      }
+    }
+    &.section {
+      margin-top: 2em;
+      margin-bottom: 1em;
+      border-bottom: 0.1em solid;
+      border-bottom-color: var(--color-nested-form-label);
+      &.sectionHidden {
+        label {
+          svg {
+            transform: rotate(-90deg);
+          }
+        }
+      }
+      label {
+        span {
+          margin-left: 0.25em;
+        }
+        svg {
+          polyline {
+            stroke: var(--color-nested-form-label);
+          }
+        }
+      }
+    }
+
+    .errorMessage {
+      margin: var(--margin-nested-form-error);
+
+      background-color: var(--color-nested-form-error-background);
+
+      blockquote {
+        border-left-color: var(--color-nested-form-error-border);
+        p {
+          color: var(--color-nested-form-error);
+        }
+        margin: var(--margin-nested-form-error);
+        padding: var(--padding-nested-form-error);
+      }
+
+      grid-area: error;
+    }
+    .freeButton {
+      @include button();
+      @include clickButtonColor(click-button);
+      width: 14em;
+      margin: auto;
+      justify-content: center;
+    }
+    .clickButtons {
+      grid-area: button;
+      align-items: center;
+      display: flex;
+      .clickButton {
+        @include clickButtonColor(click-button, true);
+        @include button();
+        margin: 0 0 0 0.25em;
+        margin-bottom: var(--margin-input-text);
+        height: var(--height-ng-buttons);
+      }
+    }
+    .reqText {
+      margin-left: 0.25em;
+    }
+    ng-text-input,
+    ng-bubbles,
+    ng-select {
+      grid-area: input;
+    }
+    ng-text-input {
+      @include ngTextInput();
+      @include ngTextInputColor(input, true);
+    }
+
+    ng-select {
+      border-radius: 0px;
+    }
+
+    ng-toggle-button {
+      @include ngToggleButtonColor(ng-toggle-button);
+      grid-area: input;
+    }
+  }
+
+  *[hidden] {
+    display: none !important;
+  }
+}

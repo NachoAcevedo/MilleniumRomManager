@@ -1,0 +1,315 @@
+{
+  "preview": {
+    "component": {
+      "filter": "Rechercher un jeu",
+      "selectType": "Type d'Artwork",
+      "selectCategories": "Catégorie Steam",
+      "selectParsers": "Titre de l'analyseur",
+      "selectTypeOptions": {
+        "long": "Bannières",
+        "hero": "Arrière-plans",
+        "icon": "Icônes",
+        "games": "Tous les Artwork"
+      },
+      "by": "par",
+      "refreshImages": "Rafraîchir l’illustration",
+      "saveImage": "Enregistrer l'œuvre dans un fichier",
+      "addLocalImages": "Ajouter une œuvre d'art locale",
+      "retryDownload": "Réessayer le téléchargement de l'illustration",
+      "generateAppList": "Actualiser",
+      "saveAppList": "Enregistrer sur Steam",
+      "removeAppList": "Supprimer de Steam",
+      "remainingImages": "Récupération des URL :",
+      "stopUrlRetrieving": "Arrêt",
+      "exportSelections": "Exporter des images",
+      "importSelections": "Importer une image",
+      "backButton": "Précédent",
+      "logButton": "Journal des Événements"
+    },
+    "service": {
+      "info": {
+        "listIsBeingGenerated": "La liste est en cours de génération. Veuillez patienter.",
+        "listIsBeingSaved": "La liste est en cours d'enregistrement. Veuillez patienter.",
+        "listIsBeingRemoved": "La liste est en cours de suppression. Veuillez patienter.",
+        "listIsEmpty": "Liste vide.",
+        "populatingVDF_List": "Population de la liste VDF.",
+        "creatingBackups": "Création des sauvegardes.",
+        "readingVDF_Files": "Lecture du fichier VDF en cours...",
+        "mergingVDF_entries": "Fusion des entrés VDF.",
+        "removingVDF_entries": "Suppression des entrés VDF et des fichiers d'image.",
+        "savingCategories": "Enregistrement des informations de la catégorie dans localconfig.vdf.",
+        "savingControllers": "Enregistrement des informations du contrôleur.",
+        "removingFromCategories": "Suppression de toutes les informations de la catégorie ajoutée",
+        "updatingKnownSteamDirList": "Mise à jour d'une liste de répertoires Steam connus.",
+        "retryingDownload__i": "Nouvelle tentative de téléchargement de l'illustration depuis \"${imageUrl}\" pour \"${appTitle}\".",
+        "disabledConfigurations__i": "${count} analyseurs(s) utilisateur a été ignorée(s) (désactivée par l'utilisateur).",
+        "invalidConfigurations__i": "${count} analyseurs(s) utilisateur a été ignorée(s) (invalide).",
+        "executingParsers": "Exécution des analyseurs.",
+        "shutdownSteam": "Si Steam est en cours d'exécution, quitter Steam.",
+        "noParserConfigurations": "Veuillez d'abord créer un analyseur dans le menu \"Analyseurs\".",
+        "parserFoundNoFiles": "Aucun analyseur de fichiers ne correspond à la configuration de l'utilisateur.",
+        "allImagesRetrieved": "Toutes les URL des images disponibles ont été récupérées.",
+        "providerTimeout__i": "Le délai d'attente a été demandé par \"${provider}\" pour ${time} seconde(s).",
+        "noAccountsWarning": "Comptes utilisateur introuvables. Répertoire Steam incorrect?",
+        "preparingExport": "Préparation de l'exportation des choix d'image.",
+        "exportProgress__i": "Sauvegarde des choix d'image ${progress}.",
+        "readingSelections": "Application des choix d'image importés."
+      },
+      "errors": {
+        "fatalError": "Une erreur fatale est survenue dans Aperçu. Consultez le journal des événements pour plus de détails.",
+        "fatalError__i": "Erreur fatale Ajout de jeux: ${error}",
+        "knownSteamDirListIsEmpty": "Une liste des répertoires Steam connus est vide.",
+        "steamIsRunning": "Impossible de faire des changements lorsque Steam est en cours d'exécution!",
+        "categorySaveError": "Erreur lors de la mise à jour des catégories. Consultez le journal des événements pour plus de détails.",
+        "categorySaveError__i": "Erreur de catégorie (les raccourcis et les images seront ajoutés): ${error}",
+        "controllerSaveError": "Erreur lors de la mise à jour des modèles de contrôleur. Consultez le journal des événements pour plus de détails.",
+        "controllerSaveError__i": "Erreur de contrôleur (les raccourcis et les images seront ajoutés): ${error}",
+        "retryingDownload__i": "Téléchargement de l'illustration depuis \"${imageUrl}\" échoué pour \"${appTitle}\".",
+        "unknownProviderError__i": "Erreur réception de \"${provider}\" pour \"${title}\":\n ${error}",
+        "exportError__i": "Impossible d'enregistrer le dossier de paquets sélectionné: ${error}",
+        "importJSONFailError__i": "Impossible d'importer les sélections, JSON a été malformé: ${error}",
+        "importFailError__i": "Impossible d'importer les choix d'illustration: ${error}"
+      },
+      "success": {
+        "writingVDF_entries": "Ajouter/supprimer des entrées terminé.",
+        "removingVDF_entries": "Les entrées ont été supprimées.",
+        "exportSuccess__i": "Répertoire de choix d'images enregistré avec succès dans \"${path}\"!",
+        "importSelectionsSuccess__i": "${count} choix d'image importés avec succès !"
+      }
+    }
+  },
+  "steamParser": {
+    "onlyGamesTitle": "Trouver uniquement des illustrations pour les jeux (aucun outil ou démo)",
+    "onlyInstalledTitle": "Trouver uniquement les illustrations pour les titres installés",
+    "sourceModsTitle": "Trouver une illustration pour les mods de source non officielles",
+    "errors": {
+      "directoryInvalid": "> Répertoire Steam invalide.",
+      "noSteamAccounts": "> Le répertoire Steam spécifié n'a aucun compte.",
+      "steamChanged__i": "> Steam a modifié la structure de la base de données interne ou l'analyseur a essayé de lire une base de données obsolète.\nFichier problématique: ${file}\nErreur complète:\n ${error}",
+      "fatalError__i": "> L'analyseur Steam a échoué avec une erreur fatale:\n ${error}"
+    }
+  },
+  "nonSRMShortcutsParser": {
+    "errors": {
+      "noSteamAccounts": "> Le dossier Steam spécifié n'a aucun compte."
+    }
+  },
+  "manualParser": {
+    "manifestsInputTitle": "Répertoire des Manifestes",
+    "manifestsInputPlaceholder": {
+      "Linux": "/fr/path/to/votre/manifests/"
+    }
+  },
+  "epicParser": {
+    "launcherModeInputTitle": "Lancer les jeux via Epic pour les services en ligne",
+    "errors": {
+      "epicNotInstalled": "> Epic Games ne semble pas être installé.",
+      "fatalError__i": "> L'analyseur Epic Games a échoué avec une erreur fatale:\n ${error}"
+    }
+  },
+  "uplayParser": {
+    "launcherModeInputTitle": "Lancer les jeux via UPlay pour les services en ligne",
+    "errors": {
+      "uplayNotCompatible": "> L'analyseur UPlay n'est pas disponible sur Linux ou Mac.",
+      "uplayDirNotFound": "> Le répertoire UPlay spécifié n'existe pas.",
+      "uplayNotInstalled": "> UPlay n'est pas installé dans le répertoire spécifié.",
+      "fatalError__i": "> L'analyseur UPlay a échoué avec une erreur fatale:\n ${error}"
+    }
+  },
+  "gogParser": {
+    "launcherModeInputTitle": "Lancer les jeux via GOG Galaxy",
+    "errors": {
+      "fatalError__i": "> L'analyseur GOG Galaxy a échoué avec une erreur fatale:\n ${error}",
+      "gogNotCompatible": "> L'analyseur GOG Galaxy n'est actuellement disponible que sous Windows.",
+      "gogNotInstalled": "> GOG Galaxy ne semble pas être installé."
+    }
+  },
+  "amazonGamesParser": {
+    "launcherModeInputTitle": "Lancer les jeux via Amazon Games",
+    "errors": {
+      "osUnsupported": "> L'analyseur Amazon Games a échoué car Amazon Games n'est disponible que sur windows.",
+      "databaseNotFound": "> Fichier de base de données Amazon Games introuvable. Amazon Games n'est probablement pas installé.",
+      "fatalError__i": "> L'analyseur Amazon Games a échoué avec une erreur fatale:\n ${error}"
+    }
+  },
+  "eaDesktopParser": {
+    "eaLauncherModeTitle": "Lancer les jeux via EA Desktop",
+    "errors": {
+      "invalidXML__i": "> Fichier XML invalide ${dataFile}"
+    }
+  },
+  "sgdbProvider": {
+    "nsfwInputTitle": "Autoriser les images NSFW",
+    "humorInputTitle": "Autoriser les images de blagues",
+    "imageMotionTypesTitle": "Types d'animation autorisés",
+    "stylesTitle": "Styles de grille autorisés",
+    "stylesHeroTitle": "Styles de héros autorisés",
+    "stylesLogoTitle": "Styles de logo autorisés",
+    "stylesIconTitle": "Styles d'icônes autorisés",
+    "sizesTitle": "Dimensions autorisées des bannières",
+    "sizesHeroTitle": "Dimensions de héros autorisées"
+  },
+  "logger": {
+    "component": {
+      "noMessages": "Aucun message disponible",
+      "error": "Messages d'erreur",
+      "info": "Messages d'info",
+      "success": "Messages de succès",
+      "autoscroll": "Défilement automatique",
+      "clearLog": "Effacer"
+    }
+  },
+  "configPresets": {
+    "service": {
+      "info": {
+        "downloaded": "Les préréglages de la communauté ont été mis à jour."
+      }
+    }
+  },
+  "settings": {
+    "component": {
+      "text": {
+        "offlineMode": "Mode hors ligne",
+        "removeApps_btn": "Retirer",
+        "enabledProviders": "Activés fournisseurs d'images",
+        "resetFuzzy_btn": "Réinitialiser",
+        "customVariables_desc": "des variables personnalisées",
+        "configPresets_desc": "des configurations prédéfinies",
+        "deleteDisabledShortcuts": "Retirer les raccourcis pour les analyseurs désactivés",
+        "clearLogOnTest": "Effacer automatiquement les logs avant de tester les analyseurs",
+        "configDir": "Dossier de Configuration",
+        "steamDir": "Dossier Steam"
+      },
+      "placeholder": {
+        "noProviders": "Aucun",
+        "userAccounts": "Par exemple ${steamlogin}",
+        "bySystem": {
+          "Windows_NT": {
+            "localImagesDirectory": "Par exemple C:\\Path\\To\\LocalArtwork\\"
+          },
+          "Darwin": {
+            "romsDirectory": "Par exemple ~/ROMs/",
+            "retroarchPath": "Par exemple /chemin/vers/retroarch",
+            "localImagesDirectory": "Par exemple ~/chemin/vers/localartwork/"
+          },
+          "Linux": {
+            "retroarchPath": "Par exemple /chemin/vers/retroarch",
+            "localImagesDirectory": "Par exemple ~/chemin/vers/localartwork/"
+          }
+        }
+      }
+    }
+  },
+  "nav": {
+    "component": {
+      "about": "À propos",
+      "preview": "Aperçu",
+      "view": "Voir les jeux",
+      "logger": "Journal des Événements",
+      "settings": "Paramètres",
+      "parsers": "Analyseur",
+      "noTitle": "Aucun titre!"
+    }
+  },
+  "userExceptions": {
+    "component": {
+      "buttons": {
+        "save": "Enregistrer",
+        "undoChanges": "Annuler les changements",
+        "deleteItem": "Supprimer l'exception"
+      },
+      "text": {
+        "excludeArtwork": "Illustration locale uniquement"
+      },
+      "placeholder": {
+        "sortBy": "Trier par"
+      }
+    }
+  },
+  "parsers": {
+    "component": {
+      "buttons": {
+        "save": "Enregistrer",
+        "copy": "Dupliquer",
+        "delete": "Supprimer",
+        "moveUp": "Monter",
+        "moveDown": "Descendre",
+        "undoChanges": "Annuler les changements",
+        "undoDelete": "Annuler la suppression",
+        "toClipboard": "Copier la configuration dans le presse-papiers"
+      },
+      "info": {
+        "testStarting__i": "Test de l'analyseur \"${title}\" (SRM version - ${version} ${portable}).",
+        "opSys__i": "Le système d'exploitation est \"${os}\"",
+        "testCompleted": "Test de l'analyseur terminé.",
+        "nothingWasFound": "L'analyseur n'a rien trouvé.",
+        "userExclusions": "Utilisateur exclu:",
+        "excludedFileInfo__i": "[${index}/${total}] : ${filename}\n Exclu par \"${exceptionKey}\"",
+        "fetchingControllerTemplates": "Récupération des modèles de contrôleur"
+      },
+      "error": {
+        "missingAccounts__i": "${count} comptes utilisateurs n'ont pas été trouvés (l'utilisateur doit se connecter à Steam au moins une fois):",
+        "cannotParseUserIDs": "Erreur lors de l'analyse des comptes utilisateur:",
+        "failedToMatch": "Échec de la correspondance:",
+        "testFailed": "Le test a échoué",
+        "cannotTestInvalid": "Impossible de tester une configuration invalide!",
+        "cannotCopyInvalid": "Impossible de copier une configuration invalide!",
+        "failedToCopy": "Échec de la copie dans le presse-papier!",
+        "cannotFetchTemplates": "Impossible de récupérer les modèles de contrôleur d'un répertoire Steam invalide!",
+        "errorRemovingControllers": "Erreur lors de la suppression des contrôleurs:",
+        "cannotRemoveControllers": "Impossible de supprimer les contrôleurs d'un répertoire Steam invalide!"
+      },
+      "success": {
+        "foundAccounts__i": "${count} compte(s) utilisateur disponible(s) trouvé:",
+        "extractedTitle__i": "[${index}/${total}]:        Titre extrait - ${title}",
+        "fuzzyTitle__i": "[${index}/${total}]:   Titre approximatif - ${title}",
+        "finalTitle__i": "[${index}/${total}]:          Titre final - ${title}",
+        "filePath__i": "[${index}/${total}]:    Chemin du fichier - ${filePath}",
+        "startDir__i": "[${index}/${total}]: Répertoire de départ - ${startDir}",
+        "completeShortcut__i": "[${index}/${total}]:    Raccourci complet - ${shortcut}",
+        "removedControllers__i": "Contrôleurs supprimés avec succès pour l'analyseur: ${configTitle}",
+        "fetchedTemplates": "Tous les modèles de contrôleur ont été récupérés"
+      },
+      "label": {
+        "parserType": "Type d'analyseur",
+        "executableLocation": "Exécutable",
+        "romDirectory": "Répertoire des ROMs",
+        "steamDirectory": "Répertoire Steam",
+        "userAccounts": "Comptes utilisateur",
+        "defaultImage__i": "${artworkType} par défaut"
+      },
+      "placeholder": {
+        "parserType": "Sélectionner analyseur...",
+        "configTitle": "Mon Super Analyseur",
+        "imageProviders": "Vide",
+        "multiAPIPlaceholder": "Aucun filtre"
+      },
+      "text": {
+        "skipFileIfVariableWasNotFound": "Ignorer le fichier si la variable n'a pas été trouvée",
+        "caseInsensitiveVariables": "Variables insensibles à la casse",
+        "shortcut_passthrough": "Suivez .lnk ou .desktop vers destination (Windows et Linux uniquement)",
+        "fuzzy_removeBrackets": "Retirer les accolades (...) et [...]",
+        "fuzzy_replaceDiacritic": "Remplacer les caractères diacritiques",
+        "appendArgsToExecutable": "Ajouter des arguments à l'exécutable",
+        "disabled": "Désactiver l'analyseur actuel",
+        "advanced": "Afficher les options avancées",
+        "noTitle": "Aucun titre!"
+      }
+    }
+  },
+  "fileParser": {
+    "error": {
+      "parserNotFound__i": "L'analyseur \"${name}\" n'a pas été trouvé!"
+    }
+  },
+  "vdfManager": {
+    "error": {
+      "noUsersFound": "Aucun des répertoires Steam fournis ne contenait de répertoires utilisateurs."
+    }
+  },
+  "helpers": {
+    "error": {
+      "noUserIdsInDir__i": "\"${steamDirectory}\" ne contient aucun identifiant d'utilisateur."
+    }
+  }
+}

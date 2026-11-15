@@ -1,0 +1,7 @@
+{
+  "name": "rom-manager-parity",
+  "common_name": "Importador de juegos · SRM 2.6.3",
+  "description": "Abre una compilación propia del importador con el motor original de SRM y una interfaz renovada.",
+  "version": "2.6.3",
+  "backendType": "lua"
+}

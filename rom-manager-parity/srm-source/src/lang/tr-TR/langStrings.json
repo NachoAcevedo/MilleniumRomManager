@@ -1,0 +1,11 @@
+{
+  "preview": {
+    "component": {
+      "by": "tarafından",
+      "refreshImages": "eseri yenile",
+      "saveImage": "eseri dosyaya kaydet",
+      "addLocalImages": "Yerel eser ekle",
+      "generateAppList": "Yenile"
+    }
+  }
+}

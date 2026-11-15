@@ -1,0 +1,101 @@
+{
+  "preview": {
+    "component": {
+      "filter": "Sök efter spel",
+      "selectTypeOptions": {
+        "hero": "Hjältar",
+        "icon": "Ikoner",
+        "logo": "Logotyper"
+      },
+      "by": "av",
+      "backButton": "Tillbaka",
+      "logButton": "Logg"
+    },
+    "service": {
+      "info": {
+        "listIsEmpty": "Listan är tom."
+      }
+    }
+  },
+  "UWPParser": {
+    "UWPDirPlaceholder": {
+      "Darwin": "/path/to/XboxGames/ eller /path/to/WindowsApps/",
+      "Linux": "/path/to/XboxGames/ eller /path/to/WindowsApps/"
+    }
+  },
+  "logger": {
+    "component": {
+      "error": "Felmeddelanden",
+      "clearLog": "Rensa"
+    }
+  },
+  "settings": {
+    "component": {
+      "label": {
+        "general": "Allmänt"
+      },
+      "text": {
+        "offlineMode": "Offline-läge",
+        "removeApps_btn": "Ta bort",
+        "selectLanguage": "Välj språk",
+        "selectTheme": "Välj tema",
+        "resetFuzzy_btn": "Återställ",
+        "customVariables_desc": "anpassade variabler"
+      },
+      "placeholder": {
+        "noProviders": "Ingen"
+      }
+    }
+  },
+  "nav": {
+    "component": {
+      "about": "Om",
+      "view": "Visa spel",
+      "logger": "Logg",
+      "settings": "Inställningar",
+      "customVariables": "Variabler",
+      "userExceptions": "Undantag",
+      "noTitle": "Ingen titel!"
+    }
+  },
+  "userExceptions": {
+    "component": {
+      "buttons": {
+        "save": "Spara",
+        "undoChanges": "Ångra ändringar"
+      }
+    }
+  },
+  "parsers": {
+    "component": {
+      "buttons": {
+        "save": "Spara",
+        "copy": "Klona",
+        "delete": "Radera",
+        "moveUp": "Flytta upp",
+        "moveDown": "Flytta ner",
+        "undoChanges": "Ångra ändringar",
+        "undoDelete": "Ångra borttagning"
+      },
+      "label": {
+        "userAccounts": "Användarkonton"
+      },
+      "placeholder": {
+        "steamDirectory": {
+          "Darwin": "${steamdirglobal} eller /path/to/Steam/",
+          "Linux": "${steamdirglobal} eller /path/to/Steam/"
+        },
+        "imageProviders": "Ingen",
+        "multiAPIPlaceholder": "Inget filter"
+      },
+      "text": {
+        "noTitle": "Ingen titel!"
+      }
+    },
+    "service": {
+      "text": {
+        "noTitle": "Ingen titel!"
+      }
+    }
+  }
+}

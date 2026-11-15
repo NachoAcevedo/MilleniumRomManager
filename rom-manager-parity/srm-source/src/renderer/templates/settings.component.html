@@ -1,0 +1,555 @@
+@if(showMarkdown) {
+  <markdown class="docs" [content]="this.currentDoc.content"></markdown>
+}
+<choose-accounts
+  [showChooseAccounts]="chooseUserAccountsVisible"
+  [steamDirectory]="settings.environmentVariables.steamDirectory"
+  (showAccounts)="chooseUserAccountsVisible = $event"
+  (accountsJoined)="setUserAccounts($event)"
+>
+</choose-accounts>
+<div class="settings" [class.editorOpen]="tab === 'themeEditor'">
+  <div class="tabs">
+    <button
+      class="tab"
+      [class.active]="tab === 'settings'"
+      (click)="setTab('settings')"
+    >
+      {{ lang.tabs.settings }}
+    </button>
+    <button
+      class="tab"
+      [class.active]="tab === 'themeEditor'"
+      (click)="setTab('themeEditor')"
+    >
+      {{ lang.tabs.themeEditor }}
+    </button>
+  </div>
+  @if (tab === "themeEditor") {
+    <theme-editor
+      class="themeEditor"
+      [activeTheme]="settings.theme"
+      (useTheme)="changeTheme($event)"
+      (themesChanged)="listThemes()"
+    ></theme-editor>
+  } @else {
+  <div>
+    <div class="section">
+      <label>
+        {{ lang.label.general }}
+      </label>
+    </div>
+    <div class="inputContainer">
+      <ng-toggle-button
+        class="ngToggleButton"
+        [ngModel]="settings.autoUpdate"
+        (ngModelChange)="settings.autoUpdate = $event; onSettingsChange()"
+        >{{ lang.text.autoUpdate }}</ng-toggle-button
+      >
+      <ng-toggle-button
+        class="ngToggleButton"
+        [ngModel]="settings.autoKillSteam"
+        (ngModelChange)="settings.autoKillSteam = $event; onSettingsChange()"
+        >{{ lang.text.autoKillSteam }}</ng-toggle-button
+      >
+      <ng-toggle-button
+        class="ngToggleButton"
+        [ngModel]="settings.autoRestartSteam"
+        [disabled]="!settings.autoKillSteam"
+        (ngModelChange)="settings.autoRestartSteam = $event; onSettingsChange()"
+        >{{ lang.text.autoRestartSteam }}</ng-toggle-button
+      >
+      <ng-toggle-button
+        class="ngToggleButton"
+        [ngModel]="settings.offlineMode"
+        (ngModelChange)="settings.offlineMode = $event; onSettingsChange()"
+        >{{ lang.text.offlineMode }}</ng-toggle-button
+      >
+      <ng-toggle-button
+        class="ngToggleButton"
+        [ngModel]="settings.clearLogOnTest"
+        (ngModelChange)="settings.clearLogOnTest = $event; onSettingsChange()"
+        >{{ lang.text.clearLogOnTest }}</ng-toggle-button
+      >
+    </div>
+    <div class="inputContainer">
+      <div class="inlineGroup">
+        <ng-select
+          placeholder="{{ lang.text.selectTheme }}"
+          style="font-size: 0.85em"
+          class="ngSelect"
+          [ngModel]="settings.theme"
+          (ngModelChange)="changeTheme($event);"
+          [sectionsMap]="themeSections"
+          [values]="themes"
+          [sort]="false"
+        >
+        </ng-select>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.selectTheme }}
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineGroup">
+        <ng-select
+          style="font-size: 0.85em"
+          class="ngSelect"
+          [ngModel]="settings.language"
+          (ngModelChange)="
+            settings.language = $event; loadLanguage(); onSettingsChange()
+          "
+          [values]="availableLanguages"
+        >
+        </ng-select>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.selectLanguage }}
+        </div>
+      </div>
+      <div>
+        <a href="https://crowdin.com/project/steam-rom-manager">
+          <img
+            src="https://badges.crowdin.net/steam-rom-manager/localized.svg"
+            alt="Crowdin"
+            height="25px"
+          />
+        </a>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="section">
+      <label> {{ lang.label.addGames }} </label>
+    </div>
+    <div class="inputContainer">
+      <ng-toggle-button
+        class="ngToggleButton"
+        [ngModel]="settings.previewSettings.retrieveCurrentSteamImages"
+        (ngModelChange)="
+          settings.previewSettings.retrieveCurrentSteamImages = $event;
+          onSettingsChange()
+        "
+        >{{ lang.text.showSteamImages }}</ng-toggle-button
+      >
+      <ng-toggle-button
+        class="ngToggleButton"
+        [ngModel]="settings.previewSettings.deleteDisabledShortcuts"
+        (ngModelChange)="
+          settings.previewSettings.deleteDisabledShortcuts = $event;
+          onSettingsChange()
+        "
+        >{{ lang.text.deleteDisabledShortcuts }}</ng-toggle-button
+      >
+      <ng-toggle-button
+        class="ngToggleButton"
+        [ngModel]="settings.previewSettings.disableCategories"
+        (ngModelChange)="
+          settings.previewSettings.disableCategories = $event;
+          onSettingsChange()
+        "
+        >{{ lang.text.disableCategories }}</ng-toggle-button
+      >
+      <ng-toggle-button
+        class="ngToggleButton"
+        [ngModel]="settings.previewSettings.hideUserAccount"
+        (ngModelChange)="
+          settings.previewSettings.hideUserAccount = $event; onSettingsChange()
+        "
+        >{{ lang.text.hideUserAccount }}</ng-toggle-button
+      >
+    </div>
+    <div class="inputContainer">
+      <div class="inlineGroup">
+        <div
+          class="clickButton dangerousButton"
+          style="font-size: 0.85em"
+          [class.disabled]="this.knownSteamDirectories.length === 0"
+          (click)="removeApps()"
+        >
+          {{ lang.text.removeApps_btn }}
+        </div>
+
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.removeApps_desc }}
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineGroup">
+        <div
+          class="clickButton dangerousButton"
+          style="font-size: 0.85em"
+          [class.disabled]="this.knownSteamDirectories.length === 0"
+          (click)="removeControllersOnly()"
+        >
+          {{ lang.text.removeApps_btn }}
+        </div>
+
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.removeControllers_desc }}
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <label>
+        {{ lang.label.fuzzy }}
+      </label>
+    </div>
+    <div class="inputContainer">
+      <ng-toggle-button
+        class="ngToggleButton"
+        [ngModel]="settings.fuzzyMatcher.verbose"
+        (ngModelChange)="
+          settings.fuzzyMatcher.verbose = $event; onSettingsChange()
+        "
+        >{{ lang.text.fuzzy_verbose }}</ng-toggle-button
+      >
+      <div class="inlineGroup">
+        <div
+          class="clickButton dangerousButton"
+          style="font-size: 0.85em"
+          (click)="resetFuzzy()"
+        >
+          {{ lang.text.resetFuzzy_btn }}
+        </div>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.resetFuzzy_desc }}
+        </div>
+      </div>
+      <div class="inlineGroup" style="margin-top: 0.25em">
+        <div
+          class="clickButton dangerousButton"
+          style="font-size: 0.85em"
+          (click)="clearFuzzy()"
+        >
+          {{ lang.text.resetFuzzy_btn }}
+        </div>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.resetFuzzyCache_desc }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div>
+    <div class="section">
+      <label>
+        {{ lang.label.imageProviders }}
+      </label>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineGroup">
+        <ng-select
+          style="font-size: 0.85em"
+          class="ngSelect"
+          [ngModel]="settings.previewSettings.imageLoadStrategy"
+          (ngModelChange)="
+            settings.previewSettings.imageLoadStrategy = $event;
+            onSettingsChange()
+          "
+          [multiple]="false"
+          [allowEmpty]="false"
+          [values]="availableLoadStrategies"
+        >
+        </ng-select>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.preloadImages }}
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineGroup">
+        <ng-select
+          style="font-size: 0.85em"
+          class="ngSelect"
+          [ngModel]="settings.enabledProviders"
+          (ngModelChange)="
+            settings.enabledProviders = $event; onSettingsChange()
+          "
+          [multiple]="true"
+          [allowEmpty]="true"
+          [placeholder]="lang.placeholder.noProviders"
+          [values]="availableProviders"
+        >
+        </ng-select>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.enabledProviders }}
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineGroup">
+        <ng-select
+          style="font-size: 0.85em"
+          class="ngSelect"
+          [ngModel]="settings.dnsServers"
+          (ngModelChange)="settings.dnsServers = $event; onSettingsChange()"
+          [multiple]="true"
+          [allowEmpty]="true"
+          [placeholder]="lang.placeholder.noProviders"
+          [values]="availableDNS"
+        >
+        </ng-select>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.dnsServers }}
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineGroup">
+        <ng-select
+          style="font-size: 0.85em"
+          class="ngSelect"
+          [ngModel]="settings.batchDownloadSize"
+          (ngModelChange)="
+            settings.batchDownloadSize = $event; onSettingsChange()
+          "
+          [allowEmpty]="true"
+          [placeholder]="lang.placeholder.autoBatchSize"
+          [values]="availableBatches"
+        >
+        </ng-select>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.batchDownloadSize }}
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineGroup" style="margin-top: 0.25em">
+        <div
+          class="clickButton dangerousButton"
+          style="font-size: 0.85em"
+          (click)="nukeArtworkChoices()"
+        >
+          {{ lang.text.nuke_btn }}
+        </div>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.nukeArtworkChoices_desc }}
+        </div>
+      </div>
+      <div class="inlineGroup" style="margin-top: 0.25em">
+        <div
+          class="clickButton dangerousButton"
+          style="font-size: 0.85em"
+          (click)="nukeArtworkBackups()"
+        >
+          {{ lang.text.nuke_btn }}
+        </div>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.nukeArtworkBackups_desc }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="section">
+      <label>
+        {{ lang.label.communityPresets }}
+      </label>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineGroup">
+        <div
+          class="clickButton dangerousButton"
+          [class.disabled]="cvService.isDownloading | async"
+          style="font-size: 0.85em"
+          (click)="cvService.download(true)"
+        >
+          {{ lang.text.forceDownload_btn }}
+        </div>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.customVariables_desc }}
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineGroup">
+        <div
+          class="clickButton dangerousButton"
+          [class.disabled]="cpService.isDownloading | async"
+          style="font-size: 0.85em"
+          (click)="cpService.download(true)"
+        >
+          {{ lang.text.forceDownload_btn }}
+        </div>
+        <div class="text" style="margin-left: 0.25em">
+          {{ lang.text.configPresets_desc }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="section">
+      <label>
+        {{ lang.label.environmentVariables }}
+      </label>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineLeft">
+        <div class="path text" style="margin-right: 0.25em">
+          {{ lang.environmentVariable.steamDirectory }}
+        </div>
+        <div class="directoryInput">
+          <ng-text-input
+            #steamDirectoryField
+            class="ngTextInput"
+            [placeholder]="placeholderForOS.steamDirectory"
+            [(ngModel)]="settings.environmentVariables.steamDirectory"
+            (ngModelChange)="
+              settings.environmentVariables.steamDirectory = $event;
+              onSettingsChange()
+            "
+          ></ng-text-input>
+          <ng-path-input
+            class="clickButton2"
+            [stateless]="true"
+            [directory]="true"
+            (pathChange)="steamDirectoryField.setBrowsedPath($event)"
+            >{{ lang.text.browse_btn }}</ng-path-input
+          >
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineLeft">
+        <div class="path text" style="margin-right: 0.25em">
+          {{ lang.environmentVariable.userAccounts }}
+        </div>
+        <div class="directoryInput">
+          <ng-bubbles
+            [(ngModel)]="settings.environmentVariables.userAccounts"
+            (ngModelChange)="
+              settings.environmentVariables.userAccounts = $event;
+              onSettingsChange()
+            "
+            [bubbleItems]="settings.environmentVariables.userAccounts"
+          ></ng-bubbles>
+          <!-- <ng-text-input class="ngTextInput" [placeholder]="userAccountsPlaceholder" [(ngModel)]='settings.environmentVariables.userAccounts' (ngModelChange)='settings.environmentVariables.userAccounts=$event; onSettingsChange()'></ng-text-input> -->
+          <div class="clickButton2" (click)="chooseAccounts()">{{ lang.text.choose_btn }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineLeft">
+        <div class="path text" style="margin-right: 0.25em">
+          {{ lang.environmentVariable.romsDirectory }}
+        </div>
+        <div class="directoryInput">
+          <ng-text-input
+            #romsDirectoryField
+            class="ngTextInput"
+            [placeholder]="placeholderForOS.romsDirectory"
+            [(ngModel)]="settings.environmentVariables.romsDirectory"
+            (ngModelChange)="
+              settings.environmentVariables.romsDirectory = $event;
+              onSettingsChange()
+            "
+          ></ng-text-input>
+          <ng-path-input
+            class="clickButton2"
+            [stateless]="true"
+            [directory]="true"
+            (pathChange)="romsDirectoryField.setBrowsedPath($event)"
+            >{{ lang.text.browse_btn }}</ng-path-input
+          >
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineLeft">
+        <div class="path text" style="margin-right: 0.25em">
+          {{ lang.environmentVariable.retroarchPath }}
+        </div>
+        <div class="directoryInput">
+          <ng-text-input
+            #retroarchPathField
+            class="ngTextInput"
+            [placeholder]="placeholderForOS.retroarchPath"
+            [(ngModel)]="settings.environmentVariables.retroarchPath"
+            (ngModelChange)="
+              settings.environmentVariables.retroarchPath = $event;
+              onSettingsChange()
+            "
+          ></ng-text-input>
+          <ng-path-input
+            class="clickButton2"
+            [stateless]="true"
+            [directory]="false"
+            (pathChange)="retroarchPathField.setBrowsedPath($event)"
+            >{{ lang.text.browse_btn }}</ng-path-input
+          >
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineLeft">
+        <div class="path text" style="margin-right: 0.25em">
+          {{ lang.environmentVariable.raCoresDirectory }}
+        </div>
+        <div class="directoryInput">
+          <ng-text-input
+            #raCoresDirectoryField
+            class="ngTextInput"
+            [placeholder]="placeholderForOS.raCoresDirectory"
+            [(ngModel)]="settings.environmentVariables.raCoresDirectory"
+            (ngModelChange)="
+              settings.environmentVariables.raCoresDirectory = $event;
+              onSettingsChange()
+            "
+          ></ng-text-input>
+          <ng-path-input
+            class="clickButton2"
+            [stateless]="true"
+            [directory]="true"
+            (pathChange)="raCoresDirectoryField.setBrowsedPath($event)"
+            >{{ lang.text.browse_btn }}</ng-path-input
+          >
+        </div>
+      </div>
+    </div>
+    <div class="inputContainer">
+      <div class="inlineLeft">
+        <div class="path text" style="margin-right: 0.25em">
+          {{ lang.environmentVariable.localImagesDirectory }}
+        </div>
+        <div class="directoryInput">
+          <ng-text-input
+            #localImagesDirectoryField
+            class="ngTextInput"
+            [placeholder]="placeholderForOS.localImagesDirectory"
+            [(ngModel)]="settings.environmentVariables.localImagesDirectory"
+            (ngModelChange)="
+              settings.environmentVariables.localImagesDirectory = $event;
+              onSettingsChange()
+            "
+          ></ng-text-input>
+          <ng-path-input
+            class="clickButton2"
+            [stateless]="true"
+            [directory]="true"
+            (pathChange)="localImagesDirectoryField.setBrowsedPath($event)"
+            >{{ lang.text.browse_btn }}</ng-path-input
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+</div>
+<div class="menu" drag-scroll>
+  <div class="lowerLeft">
+    @if(settings.environmentVariables.steamDirectory) {
+      <div (click)="steamDir()">{{ lang.text.steamDir }}</div>
+    }
+    <div (click)="configDir()">{{ lang.text.configDir }}</div>
+  </div>
+  <div class="lowerRight">
+    @if(showMarkdown) {
+      <div (click)="closeDocs()" class="dangerousButton">{{ lang.text.closeDocs }}</div>
+    }
+    @else {
+      <div (click)="openDocs()">{{ lang.text.openDocs }}</div>
+    }
+  </div>
+</div>

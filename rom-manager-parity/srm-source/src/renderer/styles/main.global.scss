@@ -1,0 +1,114 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+// Colors, fonts and the ambient backdrop come from the theme's tokens.
+html {
+  font-size: 16px;
+  height: 100%;
+  background-color: var(--srm-bg);
+  color: var(--srm-text);
+}
+
+body {
+  font-family: var(--srm-font);
+  line-height: var(--srm-line-height);
+  overflow: hidden;
+  height: 100%;
+  background: var(--srm-bg-art), var(--srm-bg);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--srm-accent-soft);
+}
+
+// The app's icons are white images; themes adapt them (e.g. darker on light).
+nav img,
+nav-parsers img {
+  filter: var(--srm-icon-filter);
+}
+
+* {
+  cursor: default;
+  user-select: none;
+
+  outline: none;
+}
+
+.appLoading {
+  &:before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    display: block;
+
+    width: 5em;
+    height: 5em;
+    margin: auto;
+
+    content: "";
+    animation: appLoading 0.6s linear infinite;
+
+    border-top: 0.325em solid transparent;
+    border-top-color: var(--color-app-loading-spinner);
+    border-right: 0.325em solid transparent;
+    border-radius: 50%;
+  }
+}
+
+@keyframes appLoading {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.infoIcon {
+  position: relative;
+  display: inline-flex;
+
+  width: 1em;
+  height: 1em;
+
+  border-radius: 50%;
+  font-family: var(--srm-font);
+
+  line-height: initial;
+
+  background-color: var(--color-info-button-background);
+  border: 1px solid var(--color-info-button);
+
+  &:before {
+    position: absolute;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    top: 0;
+    text-align: center;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: lowercase;
+    content: "i";
+
+    color: var(--color-info-button-text);
+    border-radius: 50%;
+    font-size: 12px;
+    box-sizing: border-box;
+    user-select: none;
+  }
+
+  &:hover {
+    cursor: pointer;
+    color: var(--color-info-button-hover);
+    background-color: var(--color-info-button-background-hover);
+    border-color: var(--color-info-button-hover);
+  }
+}

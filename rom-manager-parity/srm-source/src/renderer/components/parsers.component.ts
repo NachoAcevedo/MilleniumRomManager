@@ -1,0 +1,1804 @@
+import { VariableParser } from "../../lib/variable-parser";
+import {
+  Component,
+  AfterViewInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Renderer2,
+  ElementRef,
+  RendererStyleFlags2,
+  Input,
+} from "@angular/core";
+import { FormGroup, AbstractControl } from "@angular/forms";
+import { ActivatedRoute, Router } from "@angular/router";
+import {
+  ParsersService,
+  LoggerService,
+  ImageProviderService,
+  SettingsService,
+  ConfigurationPresetsService,
+  UserExceptionsService,
+  CustomVariablesService,
+} from "../services";
+import * as parserInfo from "../../lib/parsers/available-parsers";
+import * as steam from "../../lib/helpers/steam/generate-app-id";
+import { COMPAT_CUSTOM } from "../../lib/helpers/steam/compat-constants";
+import type { CompatToolInfo } from "../../lib/helpers/steam/compat-constants";
+import { controllerTypes, controllerNames } from "../../lib/controller-types";
+import { CoreClientService } from "../services/core-client.service";
+import {
+  artworkTypes,
+  artworkViewNames,
+  artworkSingDict,
+} from "../../lib/artwork-types";
+import {
+  UserConfiguration,
+  NestedFormElement,
+  AppSettings,
+  ConfigPresets,
+  ParserType,
+  OnlineProviderType,
+  StringDict,
+  CustomVariables,
+  TitleModifiers,
+} from "../../models";
+import { Subscription, of, concat, combineLatest } from "rxjs";
+import { distinctUntilChanged, map } from "rxjs/operators";
+import { commonField } from "../../core/parser-fields";
+import { APP } from "../../variables";
+import * as _ from "lodash";
+import {
+  imageProviderNames,
+  onlineProviders,
+  providersSelect,
+} from "../../lib/image-providers/available-providers";
+@Component({
+  selector: "parser-editor",
+  templateUrl: "../templates/parsers.component.html",
+  styleUrls: ["../styles/parsers.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ParsersComponent implements AfterViewInit, OnDestroy {
+  currentDoc: { activePath: string; content: string } = {
+    activePath: "",
+    content: "",
+  };
+  showMarkdown: boolean = false;
+  // The parser this editor edits ("new": one being created). The parsers
+  // page makes a new editor for each parser, so no state carries over.
+  @Input() parserId: string = "new";
+  // Its position in the list (-1 for a new parser).
+  get configurationIndex(): number {
+    return this.parserId === "new"
+      ? -1
+      : this.parsersService.indexOfParser(this.parserId);
+  }
+  // The form's value as last written to the parser's unsaved edits: not
+  // reloaded when it comes back from the service.
+  private lastWritten: UserConfiguration = null;
+  isUnsaved: boolean = false;
+  configPresets: ConfigPresets = {};
+  customVariables: CustomVariables = {};
+  presetsSections: StringDict = {};
+  nestedGroup: NestedFormElement.Group;
+  userForm: FormGroup;
+  chooseUserAccountsVisible: boolean = false;
+  steamDirectoryForChooseAccounts: string = "";
+  userConfigurations: {
+    saved: UserConfiguration;
+    current: UserConfiguration;
+  }[] = [];
+  private subscriptions: Subscription = new Subscription();
+  private loadedIndex: number = null;
+  private vParser = new VariableParser({ left: "${", right: "}" });
+  private appSettings: AppSettings;
+  private formChanges: Subscription = new Subscription();
+  private chooseAccountsControl: AbstractControl;
+
+  constructor(
+    private parsersService: ParsersService,
+    private loggerService: LoggerService,
+    private settingsService: SettingsService,
+    private imageProviderService: ImageProviderService,
+    private userExceptionsService: UserExceptionsService,
+    private renderer: Renderer2,
+    private elementRef: ElementRef,
+    private router: Router,
+    private activatedRoute: ActivatedRoute,
+    private changeRef: ChangeDetectorRef,
+    private cpService: ConfigurationPresetsService,
+    private cvService: CustomVariablesService,
+    private coreClient: CoreClientService,
+  ) {
+    this.appSettings = this.settingsService.getSettings();
+    this.currentDoc.content = this.lang.docs__md.intro.join("");
+    this.nestedGroup = new NestedFormElement.Group({
+      children: {
+        basicSection: new NestedFormElement.Section({
+          label: this.lang.section.basic,
+        }),
+        parserType: new NestedFormElement.Select({
+          label: this.lang.label.parserType,
+          placeholder: this.lang.placeholder.parserType,
+          sectionsMap: parserInfo.superTypesMap,
+          required: commonField("parserType").required,
+          values: parserInfo.availableParsers,
+          onValidate: (self, path) =>
+            this.parsersService.validate(
+              path[0] as keyof UserConfiguration,
+              self.value,
+            ),
+          onInfoClick: (self, path) => {
+            let parser = this.parsersService.getParserInfo(self.value);
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content = parser
+              ? parser.info
+              : this.lang.docs__md.parserType.join("");
+          },
+          onChange: (self, path) => {
+            let completePath = path.join();
+            if (this.currentDoc.activePath === completePath) {
+              let parser = this.parsersService.getParserInfo(self.value);
+              this.currentDoc.content = parser
+                ? parser.info
+                : this.lang.docs__md.parserType.join("");
+            }
+          },
+        }),
+        configTitle: new NestedFormElement.Input({
+          placeholder: this.lang.placeholder.configTitle,
+          required: commonField("configTitle").required,
+          label: this.lang.label.configTitle,
+          onValidate: (self, path) =>
+            this.parsersService.validate(
+              path[0] as keyof UserConfiguration,
+              self.value,
+            ),
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content = this.lang.docs__md.configTitle.join("");
+          },
+        }),
+        group: new NestedFormElement.ComboBox({
+          values: this.parsersService.getParserGroups().map((g) => g.name),
+          placeholder: this.lang.placeholder.group,
+          createLabel: this.lang.text.newGroup,
+          label: this.lang.label.group,
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content = this.lang.docs__md.group.join("");
+          },
+        }),
+        steamDirectory: new NestedFormElement.Input({
+          path: { directory: true },
+          placeholder: this.lang.placeholder.steamDirectory[APP.osType],
+          required: commonField("steamDirectory").required,
+          label: this.lang.label.steamDirectory,
+          highlight: this.highlight.bind(this),
+          onValidate: (self, path) =>
+            this.parsersService.validate(
+              path[0] as keyof UserConfiguration,
+              self.value,
+            ),
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content =
+              this.lang.docs__md.steamDirectory.join("");
+          },
+          buttons: [
+            new NestedFormElement.Button({
+              buttonLabel: this.lang.buttons.global,
+              onClickControlMethod: (control: AbstractControl) => {
+                control.setValue("${steamdirglobal}");
+              },
+            }),
+          ],
+        }),
+        userAccounts: new NestedFormElement.Group({
+          children: {
+            specifiedAccounts: new NestedFormElement.Bubble({
+              label: this.lang.label.userAccounts,
+              required: commonField("userAccounts.specifiedAccounts").required,
+              onValidate: (self, path) => {
+                let serialized: { [k: string]: any } = {};
+                serialized[path[1]] = self.value;
+                return this.parsersService.validate(
+                  path[0] as keyof UserConfiguration,
+                  serialized,
+                );
+              },
+              buttons: [
+                new NestedFormElement.Button({
+                  buttonLabel: this.lang.buttons.choose,
+                  onClickControlMethod: (control: AbstractControl) => {
+                    this.chooseAccountsControl = control;
+                    this.chooseAccounts();
+                  },
+                }),
+                new NestedFormElement.Button({
+                  buttonLabel: this.lang.buttons.global,
+                  onClickControlMethod: (control: AbstractControl) => {
+                    control.setValue(["Global"]);
+                  },
+                }),
+              ],
+              onInfoClick: (self, path) => {
+                this.updateShowMarkdown(true);
+                this.currentDoc.activePath = path.join();
+                this.currentDoc.content =
+                  this.lang.docs__md.userAccounts.join("");
+              },
+            }),
+          },
+        }),
+        romDirectory: new NestedFormElement.Input({
+          path: { directory: true },
+          placeholder: this.lang.placeholder.romDirectory[APP.osType],
+          required: commonField("romDirectory").required,
+          isHidden: () => this.hiddenUnlessApplies("romDirectory"),
+          label: this.lang.label.romDirectory,
+          highlight: this.highlight.bind(this),
+          onValidate: (self, path) =>
+            this.parsersService.validate(
+              path[0] as keyof UserConfiguration,
+              self.value,
+            ),
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content = this.lang.docs__md.romDirectory.join("");
+          },
+        }),
+        steamCategories: new NestedFormElement.Bubble({
+          isHidden: () => this.hiddenUnlessApplies("steamCategories"),
+          addable: true,
+          label: this.lang.label.steamCategories,
+          onValidate: (self, path) =>
+            this.parsersService.validate(
+              path[0] as keyof UserConfiguration,
+              self.value,
+            ),
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content =
+              this.lang.docs__md.steamCategories.join("");
+          },
+        }),
+        parserInputsSection: new NestedFormElement.Section({
+          label: this.lang.section.parserSpecific,
+          isHidden: () => this.isHiddenIfNoParserInputs(),
+        }),
+        parserInputs: (() => {
+          let parsers = parserInfo.availableParsers;
+          let parserInputs: { [k: string]: any } = {};
+          for (let i = 0; i < parsers.length; i++) {
+            let parser = this.parsersService.getParserInfo(parsers[i]);
+            if (parser && parser.inputs !== undefined) {
+              for (let inputFieldName in parser.inputs) {
+                let input = parser.inputs[inputFieldName];
+                const isHidden = () => {
+                  const parserTypeCtrl = this.userForm.get("parserType");
+                  const parserType$ = concat(
+                    of(parserTypeCtrl.value),
+                    parserTypeCtrl.valueChanges,
+                  );
+                  const dep = input.hiddenUnless;
+                  if (!dep) {
+                    return parserType$.pipe(
+                      map(
+                        (pType: string) => input.hidden || pType !== parsers[i],
+                      ),
+                    );
+                  }
+                  // Also react to the value of the input this one depends on
+                  // (e.g. hide the API key unless the fetch strategy is webapi).
+                  const depCtrl = this.userForm.get([
+                    "parserInputs",
+                    dep.field,
+                  ]);
+                  const dep$ = depCtrl
+                    ? concat(of(depCtrl.value), depCtrl.valueChanges)
+                    : of(undefined);
+                  return combineLatest([parserType$, dep$]).pipe(
+                    map(
+                      ([pType, depVal]: [string, any]) =>
+                        input.hidden ||
+                        pType !== parsers[i] ||
+                        depVal !== dep.value,
+                    ),
+                  );
+                };
+                const onInfoClick = (self: any, path: string[]) => {
+                  this.currentDoc.activePath = path.join();
+                  this.currentDoc.content = input.info;
+                  this.updateShowMarkdown(true);
+                };
+                if (["path", "dir", "text"].includes(input.inputType)) {
+                  parserInputs[inputFieldName] = new NestedFormElement.Input({
+                    path: ["path", "dir"].includes(input.inputType)
+                      ? {
+                          directory: input.inputType === "dir",
+                        }
+                      : undefined,
+                    placeholder: input.placeholder,
+                    required: !!input.required,
+                    highlight: this.highlight.bind(this),
+                    initialValue: input.initialValue as string,
+                    label: input.label,
+                    isHidden: isHidden,
+                    onValidate: (self, path) => {
+                      if (
+                        parserInfo.superTypesMap[parsers[i]] !==
+                          parserInfo.ArtworkOnlyType &&
+                        this.userForm.get("parserType").value === parsers[i]
+                      )
+                        return this.parsersService.validate(
+                          path[0] as keyof UserConfiguration,
+                          {
+                            parser: parsers[i],
+                            input: inputFieldName,
+                            inputData: self.value as string,
+                          },
+                        );
+                      else return null;
+                    },
+                    onInfoClick: onInfoClick,
+                  });
+                } else if (input.inputType == "toggle") {
+                  parserInputs[inputFieldName] = new NestedFormElement.Toggle({
+                    text: input.label,
+                    isHidden: isHidden,
+                  });
+                } else if (input.inputType == "multiselect") {
+                  parserInputs[inputFieldName] = new NestedFormElement.Select({
+                    label: input.label,
+                    multiple: true,
+                    allowEmpty: false,
+                    values: input.allowedValues,
+                    initialValue: input.initialValue as string[],
+                    onInfoClick: onInfoClick,
+                    isHidden: isHidden,
+                  });
+                } else if (input.inputType == "select") {
+                  parserInputs[inputFieldName] = new NestedFormElement.Select({
+                    label: input.label,
+                    placeholder: input.placeholder,
+                    multiple: false,
+                    allowEmpty: false,
+                    values: input.allowedValues,
+                    initialValue: input.initialValue as string,
+                    onInfoClick: onInfoClick,
+                    isHidden: isHidden,
+                  });
+                }
+              }
+            }
+          }
+
+          return new NestedFormElement.Group({
+            children: parserInputs,
+          });
+        })(),
+        executableSection: new NestedFormElement.Section({
+          label: this.lang.section.executable,
+          isHidden: () => this.isHiddenIfNotRomsParser(),
+        }),
+        executable: new NestedFormElement.Group({
+          isHidden: () => this.hiddenUnlessApplies("executable.path"),
+          children: {
+            path: new NestedFormElement.Input({
+              path: { directory: false },
+              label: this.lang.label.executableLocation,
+              placeholder: this.lang.placeholder.executableLocation[APP.osType],
+              highlight: this.highlight.bind(this),
+              important: true,
+              onValidate: (self, path) => {
+                let serialized: { [k: string]: any } = {};
+                serialized[path[1]] = self.value;
+                return this.parsersService.validate(
+                  path[0] as keyof UserConfiguration,
+                  serialized,
+                );
+              },
+              onInfoClick: (self, path) => {
+                this.currentDoc.activePath = path.join();
+                this.currentDoc.content =
+                  this.lang.docs__md.executableLocation.join("");
+              },
+            }),
+
+            //TODO Move shortcutPassthrough to glob and glob regex parser inputs
+            //TODO Move appendArgsToExecutable to child of executableArgs group
+            //TODO Make Executable required but have the option to set it to None
+            shortcutPassthrough: new NestedFormElement.Toggle({
+              text: this.lang.text.shortcut_passthrough,
+            }),
+            appendArgsToExecutable: new NestedFormElement.Toggle({
+              isHidden: () =>
+                this.hiddenUnlessApplies("executable.appendArgsToExecutable"),
+              text: this.lang.text.appendArgsToExecutable,
+            }),
+          },
+        }),
+        executableArgs: new NestedFormElement.Input({
+          placeholder: this.lang.placeholder.executableArgs,
+          isHidden: () => this.hiddenUnlessApplies("executableArgs"),
+          label: this.lang.label.executableArgs,
+          highlight: this.highlight.bind(this),
+          important: true,
+          onValidate: (self, path) =>
+            this.parsersService.validate(
+              path[0] as keyof UserConfiguration,
+              self.value,
+            ),
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content =
+              this.lang.docs__md.executableArgs.join("");
+          },
+        }),
+        executableModifier: new NestedFormElement.Input({
+          isHidden: () => this.hiddenUnlessApplies("executableModifier"),
+          highlight: this.highlight.bind(this),
+          label: this.lang.label.executableModifier,
+          placeholder: this.lang.placeholder.executableModifier,
+          onValidate: (self, path) =>
+            this.parsersService.validate(
+              path[0] as keyof UserConfiguration,
+              self.value,
+            ),
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content =
+              this.lang.docs__md.executableModifier.join("");
+          },
+        }),
+        startInDirectory: new NestedFormElement.Input({
+          path: { directory: true },
+          placeholder: this.lang.placeholder.startInDirectory[APP.osType],
+          label: this.lang.label.startInDirectory,
+          highlight: this.highlight.bind(this),
+          isHidden: () => this.hiddenUnlessApplies("startInDirectory"),
+          onValidate: (self, path) =>
+            this.parsersService.validate(
+              path[0] as keyof UserConfiguration,
+              self.value,
+            ),
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content =
+              this.lang.docs__md.startInDirectory.join("");
+          },
+        }),
+        titleSection: new NestedFormElement.Section({
+          label: this.lang.section.titleModification,
+          isHidden: () => this.isHiddenIfArtworkOnlyParser(),
+          startMinimized: true,
+        }),
+        titleModifier: new NestedFormElement.Input({
+          highlight: this.highlight.bind(this),
+          isHidden: () => this.hiddenUnlessApplies("titleModifier"),
+          placeholder: this.lang.placeholder.titleModifier,
+          label: this.lang.label.titleModifier,
+          onValidate: (self, path) =>
+            this.parsersService.validate(
+              path[0] as keyof UserConfiguration,
+              self.value,
+            ),
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content = this.lang.docs__md.titleModifier.join("");
+          },
+        }),
+        titleFromVariable: new NestedFormElement.Group({
+          isHidden: () =>
+            this.hiddenUnlessApplies("titleFromVariable.limitToGroups"),
+          label: this.lang.label.titleFromVariable,
+          children: {
+            limitToGroups: new NestedFormElement.Select({
+              multiple: true,
+              allowEmpty: true,
+              values: Object.keys(this.customVariables),
+              placeholder: this.lang.placeholder.titleVariables,
+            }),
+            caseInsensitiveVariables: new NestedFormElement.Toggle({
+              text: this.lang.text.caseInsensitiveVariables,
+            }),
+            skipFileIfVariableWasNotFound: new NestedFormElement.Toggle({
+              text: this.lang.text.skipFileIfVariableWasNotFound,
+            }),
+          },
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content =
+              this.lang.docs__md.titleFromVariable.join("");
+          },
+        }),
+        sortAsFromVariable: new NestedFormElement.Group({
+          isHidden: () =>
+            this.hiddenUnlessApplies("sortAsFromVariable.limitToGroups"),
+          label: this.lang.label.sortAsFromVariable,
+          children: {
+            limitToGroups: new NestedFormElement.Select({
+              multiple: true,
+              allowEmpty: true,
+              values: Object.keys(this.customVariables),
+              placeholder: this.lang.placeholder.sortAsVariables,
+            }),
+          },
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content =
+              this.lang.docs__md.sortAsFromVariable.join("");
+          },
+        }),
+        fuzzyMatch: new NestedFormElement.Group({
+          label: this.lang.label.fuzzyMatch,
+          isHidden: () => this.hiddenUnlessApplies("fuzzyMatch.removeBrackets"),
+          children: {
+            replaceDiacritics: new NestedFormElement.Toggle({
+              text: this.lang.text.fuzzy_replaceDiacritic,
+            }),
+            removeCharacters: new NestedFormElement.Toggle({
+              text: this.lang.text.fuzzy_removeCharacters,
+            }),
+            removeBrackets: new NestedFormElement.Toggle({
+              text: this.lang.text.fuzzy_removeBrackets,
+            }),
+          },
+          onInfoClick: (control, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content = this.lang.docs__md.fuzzyMatch.join("");
+          },
+        }),
+        controllerSection: new NestedFormElement.Section({
+          label: this.lang.section.controllerTemplates,
+          isHidden: () => this.isHiddenIfArtworkOnlyParser(),
+          startMinimized: true,
+        }),
+        fetchControllerTemplatesButton: new NestedFormElement.Button({
+          buttonLabel: this.lang.buttons.refetchControllerTemplates,
+          onClickMethod: this.fetchControllerTemplates.bind(this),
+          isHidden: () => this.isHiddenIfArtworkOnlyParser(),
+        }),
+        removeControllersButton: new NestedFormElement.Button({
+          buttonLabel: this.lang.buttons.unsetControllers,
+          onClickMethod: this.removeControllers.bind(this),
+          isHidden: () => this.isHiddenIfArtworkOnlyParser(),
+        }),
+        steamInputEnabled: new NestedFormElement.Select({
+          isHidden: () => this.hiddenUnlessApplies("steamInputEnabled"),
+          label: this.lang.label.steamInputEnabled,
+          placeholder: this.lang.placeholder.steamInputEnabled,
+          values: [
+            { value: "0", displayValue: this.lang.steamInputOptions.disabled },
+            {
+              value: "1",
+              displayValue: this.lang.steamInputOptions.useDefault,
+            },
+            { value: "2", displayValue: this.lang.steamInputOptions.enabled },
+          ],
+        }),
+        controllers: new NestedFormElement.Group({
+          children: (() => {
+            let children: { [k: string]: any } = {};
+            for (let controllerType of controllerTypes) {
+              children[controllerType] = new NestedFormElement.Select({
+                isHidden: () => this.isHiddenIfArtworkOnlyParser(),
+                label: this.lang.label.controllerTemplate__i.interpolate({
+                  controller:
+                    controllerNames[
+                      controllerType as keyof typeof controllerNames
+                    ],
+                }),
+                placeholder: this.lang.placeholder.controllerTemplate,
+                multiple: false,
+                allowEmpty: true,
+                values: [],
+                onInfoClick: (self, path) => {
+                  this.currentDoc.activePath = path.join();
+                  this.currentDoc.content =
+                    this.lang.docs__md.controllerTemplates.join("");
+                },
+              });
+            }
+            return children;
+          })(),
+        }),
+        compatSection: new NestedFormElement.Section({
+          label: this.lang.section.steamPlayCompat,
+          isHidden: () => this.isHiddenIfArtworkOnlyOrNotLinuxParser(),
+        }),
+        compatToolName: new NestedFormElement.Select({
+          isHidden: () => this.hiddenUnlessApplies("compatToolName"),
+          label: this.lang.label.compatToolName,
+          placeholder: this.lang.placeholder.compatToolName,
+          multiple: false,
+          allowEmpty: true,
+          // Populated at runtime by fetchCompatTools().
+          values: [],
+        }),
+        compatToolNameCustom: new NestedFormElement.Input({
+          // Only shown when "Custom…" is picked; the select itself is already
+          // hidden (and stays "") for artwork-only parsers or non-Linux OSes.
+          isHidden: () => this.hiddenUnlessApplies("compatToolNameCustom"),
+          label: this.lang.label.compatToolNameCustom,
+          placeholder: this.lang.placeholder.compatToolNameCustom,
+        }),
+        scriptWrapperSection: new NestedFormElement.Section({
+          label: this.lang.section.scriptWrapper,
+          isHidden: () => this.hiddenUnlessApplies("scriptWrapper.enabled"),
+          startMinimized: true,
+        }),
+        scriptWrapper: new NestedFormElement.Group({
+          isHidden: () => this.hiddenUnlessApplies("scriptWrapper.enabled"),
+          children: {
+            enabled: new NestedFormElement.Toggle({
+              text: this.lang.label.scriptWrapperEnabled,
+              onInfoClick: (self, path) => {
+                this.currentDoc.activePath = path.join();
+                this.currentDoc.content =
+                  this.lang.docs__md.scriptWrapper.join("");
+              },
+            }),
+            ...Object.fromEntries(
+              (["preLaunch", "postLaunch", "postExit"] as const).map(
+                (stage) => [
+                  stage,
+                  new NestedFormElement.Group({
+                    isHidden: () =>
+                      this.hiddenUnlessApplies(`scriptWrapper.${stage}.script`),
+                    children: {
+                      script: new NestedFormElement.Input({
+                        path: { directory: false },
+                        label: this.lang.label[`${stage}Script`],
+                        placeholder:
+                          this.lang.placeholder.launchScript[APP.osType],
+                        onInfoClick: (self, path) => {
+                          this.currentDoc.activePath = path.join();
+                          this.currentDoc.content =
+                            this.lang.docs__md.scriptWrapper.join("");
+                        },
+                      }),
+                      delay: new NestedFormElement.NumberInput({
+                        label: this.lang.label[`${stage}Delay`],
+                        min: 0,
+                        unit: "s",
+                      }),
+                    },
+                  }),
+                ],
+              ),
+            ),
+          },
+        }),
+        onlineImageSection: new NestedFormElement.Section({
+          label: this.lang.section.artworkProvider,
+          startMinimized: true,
+        }),
+        imageProviders: new NestedFormElement.Select({
+          label: this.lang.label.imageProviders,
+          placeholder: this.lang.placeholder.imageProviders,
+          multiple: true,
+          allowEmpty: true,
+          values: providersSelect,
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content =
+              this.lang.docs__md.imageProviders.join("");
+          },
+        }),
+        onlineImageQueries: new NestedFormElement.Bubble({
+          label: this.lang.label.onlineImageQueries,
+          highlight: this.highlight.bind(this),
+          addable: true,
+          onValidate: (self, path) =>
+            this.parsersService.validate(
+              path[0] as keyof UserConfiguration,
+              self.value,
+            ),
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content =
+              this.lang.docs__md.onlineImageQueries.join("");
+          },
+        }),
+        imagePool: new NestedFormElement.Input({
+          label: this.lang.label.imagePool,
+          placeholder: this.lang.placeholder.imagePool,
+          highlight: this.highlight.bind(this),
+          onValidate: (self, path) =>
+            this.parsersService.validate(
+              path[0] as keyof UserConfiguration,
+              self.value,
+            ),
+          onInfoClick: (self, path) => {
+            this.currentDoc.activePath = path.join();
+            this.currentDoc.content = this.lang.docs__md.imagePool.join("");
+          },
+        }),
+        drmProtect: new NestedFormElement.Toggle({
+          text: this.lang.text.drmProtect,
+        }),
+        imageProviderAPIs: (() => {
+          let imageProviderAPIInputs: { [k: string]: NestedFormElement.Group } =
+            {};
+          let providerKeys = onlineProviders;
+          for (let i = 0; i < providerKeys.length; i++) {
+            let provider = this.imageProviderService.instance.getProviderInfo(
+              providerKeys[i],
+            );
+            let providerL =
+              this.imageProviderService.instance.getProviderInfoLang(
+                providerKeys[i],
+              );
+            if (
+              provider &&
+              provider.inputs &&
+              Object.keys(provider.inputs).length
+            ) {
+              imageProviderAPIInputs[providerKeys[i]] = (() => {
+                let apiInputs: { [k: string]: any } = {};
+                for (let inputFieldName in provider.inputs) {
+                  let input = provider.inputs[inputFieldName];
+                  if (input.inputType == "toggle") {
+                    apiInputs[inputFieldName] = new NestedFormElement.Toggle({
+                      text: providerL.inputs[inputFieldName].label,
+                      isHidden: () =>
+                        this.isHiddenIfNoProvider(providerKeys[i]),
+                    });
+                  } else if (input.inputType == "multiselect") {
+                    apiInputs[inputFieldName] = new NestedFormElement.Select({
+                      label: providerL.inputs[inputFieldName].label,
+                      multiple: input.multiple,
+                      allowEmpty: input.allowEmpty,
+                      placeholder: this.lang.placeholder.multiAPIPlaceholder,
+                      isHidden: () =>
+                        this.isHiddenIfNoProvider(providerKeys[i]),
+                      values: input.allowedValues.map((option: string) => {
+                        return {
+                          value: option,
+                          displayValue: option.replace(/_/g, " ").startCase(),
+                        };
+                      }),
+                      onValidate: (self, path) => {
+                        return null;
+                      },
+                      onInfoClick: (self, path) => {
+                        this.currentDoc.activePath = path.join();
+                        this.currentDoc.content =
+                          providerL.inputs[inputFieldName].info;
+                      },
+                    });
+                  }
+                }
+                return new NestedFormElement.Group({
+                  children: {
+                    section: new NestedFormElement.Section({
+                      label: this.lang.section.filtersFor__i.interpolate({
+                        provider: imageProviderNames[providerKeys[i]],
+                      }),
+                      isHidden: () =>
+                        this.isHiddenIfNoProvider(providerKeys[i]),
+                    }),
+                    ...apiInputs,
+                  },
+                });
+              })();
+            }
+          }
+          return new NestedFormElement.Group({
+            children: imageProviderAPIInputs,
+          });
+        })(),
+        overlayImageSection: new NestedFormElement.Section({
+          label: this.lang.section.overlayArtwork,
+          startMinimized: true,
+        }),
+        overlayImages: (() => {
+          let overlayInputs: { [k: string]: NestedFormElement.Input } = {};
+          for (const artworkType of artworkTypes) {
+            overlayInputs[artworkType] = new NestedFormElement.Input({
+              path: { directory: false, useForwardSlash: true },
+              placeholder: this.lang.placeholder.overlayImages__i[
+                APP.osType
+              ].interpolate({
+                artworkType: artworkViewNames[artworkType].toLowerCase(),
+              }),
+              highlight: this.highlight.bind(this),
+              label: this.lang.label.overlayImages__i.interpolate({
+                artworkType: artworkViewNames[artworkType].toLowerCase(),
+              }),
+              onValidate: () => null,
+              onInfoClick: (self, path) => {
+                this.currentDoc.activePath = path.join();
+                this.currentDoc.content =
+                  this.lang.docs__md.overlayImages.join("");
+              },
+            });
+          }
+          return new NestedFormElement.Group({
+            children: overlayInputs,
+          });
+        })(),
+        localImageSection: new NestedFormElement.Section({
+          label: this.lang.section.localArtwork,
+          startMinimized: true,
+        }),
+        defaultImage: (() => {
+          let defaultImageInputs: { [k: string]: NestedFormElement.Input } = {};
+          for (const artworkType of artworkTypes) {
+            defaultImageInputs[artworkType] = new NestedFormElement.Input({
+              path: { directory: false, useForwardSlash: true },
+              placeholder: this.lang.placeholder.defaultImage__i[
+                APP.osType
+              ].interpolate({
+                artworkType: artworkSingDict[artworkType],
+              }),
+              highlight: this.highlight.bind(this),
+              label: this.lang.label.defaultImage__i.interpolate({
+                artworkType: artworkSingDict[artworkType],
+              }),
+              onValidate: (self, path) =>
+                this.parsersService.validate(path[0], self.value),
+              onInfoClick: (self, path) => {
+                this.currentDoc.activePath = path.join();
+                this.currentDoc.content =
+                  this.lang.docs__md.defaultImage.join("");
+              },
+            });
+          }
+          return new NestedFormElement.Group({
+            children: defaultImageInputs,
+          });
+        })(),
+        localImages: (() => {
+          let localImagesInputs: { [k: string]: NestedFormElement.Input } = {};
+          for (const artworkType of artworkTypes) {
+            localImagesInputs[artworkType] = new NestedFormElement.Input({
+              path: {
+                directory: true,
+                appendGlob: "${title}.@(png|PNG|jpg|JPG|webp|WEBP)",
+              },
+              placeholder: this.lang.placeholder.localImages__i[
+                APP.osType
+              ].interpolate({
+                artworkType: artworkViewNames[artworkType].toLowerCase(),
+              }),
+              highlight: this.highlight.bind(this),
+              label: this.lang.label.localImages__i.interpolate({
+                artworkType: artworkViewNames[artworkType].toLowerCase(),
+              }),
+              onValidate: (self, path) => {
+                return this.parsersService.validate(path[0], self.value);
+              },
+              onInfoClick: (self, path) => {
+                this.currentDoc.activePath = path.join();
+                this.currentDoc.content =
+                  this.lang.docs__md.localImages.join("");
+              },
+            });
+          }
+          return new NestedFormElement.Group({
+            children: localImagesInputs,
+          });
+        })(),
+      },
+    });
+  }
+
+  get lang() {
+    return APP.lang.parsers.component;
+  }
+
+  get parserInfo() {
+    return parserInfo;
+  }
+
+  updateShowMarkdown(showMarkdown: boolean) {
+    this.showMarkdown = showMarkdown;
+    if (this.showMarkdown) {
+      this.renderer.setStyle(
+        this.elementRef.nativeElement,
+        "--markdown-width",
+        "1fr",
+        RendererStyleFlags2.DashCase,
+      );
+    } else {
+      this.renderer.setStyle(
+        this.elementRef.nativeElement,
+        "--markdown-width",
+        "0fr",
+        RendererStyleFlags2.DashCase,
+      );
+    }
+  }
+
+  ngAfterViewInit() {
+    this.subscriptions.add(
+      this.parsersService.getUserConfigurations().subscribe((data) => {
+        this.userConfigurations = data;
+        this.loadConfiguration();
+      }),
+    );
+    if (this.parserId !== "new") {
+      this.currentDoc.activePath = "parserType";
+    } else {
+      this.currentDoc.activePath = "";
+      this.currentDoc.content = this.lang.docs__md.intro.join("");
+    }
+    this.loadConfiguration();
+    this.subscriptions.add(
+      this.cpService.dataObservable.subscribe((data) => {
+        this.configPresets = data;
+        this.presetsSections = Object.fromEntries(
+          Object.keys(this.configPresets)
+            .map((presetName) => [
+              presetName,
+              parserInfo.superTypesMap[
+                this.configPresets[presetName].parserType
+              ],
+            ])
+            .sort((a, b) => a[1].localeCompare(b[1])),
+        );
+      }),
+    );
+    this.subscriptions.add(
+      this.settingsService.getChangeObservable().subscribe(() => {
+        if (this.nestedGroup) {
+          (
+            this.nestedGroup.children.group as NestedFormElement.ComboBox
+          ).values = this.parsersService.getParserGroups().map((g) => g.name);
+          this.changeRef.detectChanges();
+        }
+      }),
+    );
+    this.subscriptions.add(
+      this.cvService.dataObservable.subscribe((data) => {
+        this.customVariables = data;
+        if (this.nestedGroup) {
+          (
+            (
+              this.nestedGroup.children
+                .titleFromVariable as NestedFormElement.Group
+            ).children.limitToGroups as NestedFormElement.Select
+          ).values = Object.keys(this.customVariables);
+          (
+            (
+              this.nestedGroup.children
+                .sortAsFromVariable as NestedFormElement.Group
+            ).children.limitToGroups as NestedFormElement.Select
+          ).values = Object.keys(this.customVariables);
+        }
+        this.changeRef.detectChanges();
+      }),
+    );
+    this.subscriptions.add(
+      this.parsersService.getSavedControllerTemplates().subscribe((data) => {
+        this.parsersService.controllerTemplates = data;
+        this.fetchControllerTemplates(false);
+      }),
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
+    this.formChanges.unsubscribe();
+  }
+
+  getDeletedConfigurations() {
+    return this.parsersService.getDeletedConfigurations();
+  }
+
+  setPreset(key: string) {
+    if (key != null) {
+      const config = this.configPresets[key];
+      if (this.loadedIndex === -1) {
+        this.userForm.patchValue(config);
+        this.changeRef.detectChanges();
+      } else
+        // (a copy: the parser's edits, e.g. moving it to a group, mustn't
+        // change the preset itself)
+        this.parsersService.setCurrentConfiguration(
+          this.configurationIndex,
+          _.cloneDeep(config),
+        );
+    }
+  }
+
+  presetsInfoClick() {
+    this.updateShowMarkdown(true);
+    this.currentDoc.activePath = "";
+    this.currentDoc.content = this.lang.docs__md.communityPresets.join("");
+  }
+
+  openFAQ() {
+    this.currentDoc.activePath = "";
+    this.currentDoc.content = this.lang.docs__md.faq.join("");
+  }
+
+  saveForm() {
+    if (this.userConfigurations.length === 0 || this.configurationIndex === -1)
+      this.parsersService.saveConfiguration({
+        saved: this.userForm.value as UserConfiguration,
+        current: null,
+      });
+    else
+      this.parsersService.saveConfiguration(
+        this.userConfigurations[this.configurationIndex],
+      );
+    // the new parser (or copy) is the last one
+    const added = this.parsersService.getUserConfigurationsArray().at(-1);
+    if (added) this.router.navigate(["/parsers", added.saved.parserId]);
+  }
+
+  updateForm() {
+    this.parsersService.updateConfiguration(this.configurationIndex);
+  }
+
+  deleteForm() {
+    this.parsersService.deleteConfiguration(this.configurationIndex);
+    this.router.navigate(["/parsers"]);
+  }
+
+  restoreForm() {
+    this.parsersService.restoreConfiguration();
+  }
+
+  toClipboard() {
+    let config = this.userForm.value as UserConfiguration;
+    config.parserId =
+      this.configurationIndex === -1
+        ? "UNSAVED SO NO ID"
+        : this.parsersService.getParserId(this.configurationIndex);
+    if (this.parsersService.isConfigurationValid(config)) {
+      try {
+        let text = "";
+
+        let iterateGroup = (group: NestedFormElement.Group, path: string) => {
+          let keys = Object.keys(group.children);
+
+          if (group.label) text += `# ${group.label}\r\n`;
+
+          for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            const item = group.children[key];
+            const itemPath = path.length > 0 ? `${path}.${key}` : key;
+
+            if (item instanceof NestedFormElement.Group) {
+              iterateGroup(item, itemPath);
+            } else if (
+              item instanceof NestedFormElement.Input ||
+              item instanceof NestedFormElement.Bubble
+            ) {
+              let title = item.label;
+              if (title) text += `# ${title}\r\n`;
+
+              text += `····${this.userForm.get(itemPath).value}\r\n`;
+            } else if (item instanceof NestedFormElement.Toggle) {
+              let title = item.label || item.text;
+
+              text += `····${this.userForm.get(itemPath).value ? "[x]" : "[ ]"}: ${title}\r\n`;
+            } else if (item instanceof NestedFormElement.Select) {
+              let title = item.label;
+              if (title) text += `# ${title}\r\n`;
+
+              text += `····Selected: ${this.userForm.get(itemPath).value}\r\n`;
+            }
+          }
+        };
+
+        iterateGroup(this.nestedGroup, "");
+
+        navigator.clipboard.writeText(`\`\`\`\r\n${text}\`\`\``);
+        this.loggerService.info(this.lang.info.copiedToClipboard, {
+          invokeAlert: true,
+          alertTimeout: 3000,
+        });
+      } catch (error) {
+        this.loggerService.error(this.lang.error.failedToCopy, {
+          invokeAlert: true,
+          alertTimeout: 3000,
+        });
+        if (error)
+          this.loggerService.error(error, {
+            invokeAlert: true,
+            alertTimeout: 3000,
+          });
+      }
+    } else
+      this.loggerService.error(this.lang.error.cannotCopyInvalid, {
+        invokeAlert: true,
+        alertTimeout: 3000,
+      });
+  }
+
+  testForm() {
+    let config = this.userForm.value as UserConfiguration;
+    config.parserId =
+      this.configurationIndex === -1
+        ? "UNSAVED SO NO ID"
+        : this.parsersService.getParserId(this.configurationIndex);
+    let successData: string = "";
+    let errorData: string = "";
+
+    let logError = () => {
+      if (errorData) this.loggerService.error(errorData);
+      errorData = "";
+    };
+    let logSuccess = () => {
+      if (successData) this.loggerService.success(successData);
+      successData = "";
+    };
+
+    let success = (data: string) => {
+      logError();
+      if (successData) successData += "\r\n";
+      successData += data;
+    };
+    let error = (data: string) => {
+      logSuccess();
+      if (errorData) errorData += "\r\n";
+      errorData += data;
+    };
+
+    if (this.parsersService.isConfigurationValid(config)) {
+      if (this.appSettings.clearLogOnTest) {
+        this.loggerService.clearLog();
+      }
+      success(
+        this.lang.success.parserId__i.interpolate({
+          parserId: config.parserId,
+        }),
+      );
+      success("");
+      this.parsersService
+        .executeFileParser(config)
+        .then((dataArray) => {
+          if (dataArray.parsedData.parsedConfigs.length > 0) {
+            let data = dataArray.parsedData.parsedConfigs[0];
+            let totalLength =
+              data.files.length + data.failed.length + data.excluded.length;
+
+            if (data.foundUserAccounts.length > 0) {
+              this.loggerService.info("");
+              success(
+                this.lang.success.foundAccounts__i.interpolate({
+                  count: data.foundUserAccounts.length,
+                }),
+              );
+              for (let i = 0; i < data.foundUserAccounts.length; i++) {
+                success(
+                  this.lang.success.foundAccountInfo__i.interpolate({
+                    name: data.foundUserAccounts[i].name,
+                    steamID64: data.foundUserAccounts[i].steamID64,
+                    accountID: data.foundUserAccounts[i].accountID,
+                  }),
+                );
+              }
+            }
+            if (data.missingUserAccounts.length > 0) {
+              logSuccess();
+              this.loggerService.info("");
+              error(
+                this.lang.error.missingAccounts__i.interpolate({
+                  count: data.missingUserAccounts.length,
+                }),
+              );
+              for (let i = 0; i < data.missingUserAccounts.length; i++) {
+                error(
+                  this.lang.error.missingAccountInfo__i.interpolate({
+                    name: data.missingUserAccounts[i],
+                  }),
+                );
+              }
+            }
+
+            if (dataArray.parsedData.noUserAccounts) {
+              logError();
+              this.loggerService.info("");
+              error(this.lang.error.noAccountsWarning);
+            }
+
+            logSuccess();
+            logError();
+            this.loggerService.info("");
+            success("");
+            success(
+              this.lang.success.numberOfTitles__i.interpolate({
+                count: data.files.length,
+              }),
+            );
+            data.files = data.files.sort((a, b) =>
+              a.titles.extracted.localeCompare(b.titles.extracted),
+            );
+            for (let i = 0; i < data.files.length; i++) {
+              success("");
+              const executableLocation =
+                data.files[i].modifiedExecutableLocation;
+              const title = data.files[i].titles.final;
+              let shortAppId;
+              if (
+                parserInfo.superTypesMap[config.parserType] !==
+                parserInfo.ArtworkOnlyType
+              ) {
+                shortAppId = steam.generateShortAppId(
+                  executableLocation,
+                  title,
+                );
+              } else {
+                shortAppId = executableLocation.replace(/\"/g, "");
+              }
+              const appId = steam.lengthenAppId(shortAppId);
+              const exceptionKey = this.userExceptionsService.makeExceptionId(
+                executableLocation,
+                data.files[i].titles.extracted,
+                config.parserType,
+              );
+
+              success(
+                this.lang.success.exceptionKey__i.interpolate({
+                  index: i + 1,
+                  total: totalLength,
+                  appid: exceptionKey,
+                }),
+              );
+              success(
+                this.lang.success.shortAppId__i.interpolate({
+                  index: i + 1,
+                  total: totalLength,
+                  appid: shortAppId,
+                }),
+              );
+              success(
+                this.lang.success.appId__i.interpolate({
+                  index: i + 1,
+                  total: totalLength,
+                  appid: appId,
+                }),
+              );
+              success(
+                ((
+                  titles: TitleModifiers,
+                  index: number,
+                  total: number,
+                ): string => {
+                  return this.lang.success.titleWaterfall__i
+                    .interpolate({ index, total })
+                    .concat("\n")
+                    .concat(
+                      Object.entries(titles)
+                        .map(([titleKey, title], titleIndex) => {
+                          let space = " ".repeat(
+                            Math.max(30 - titleKey.length, 1),
+                          );
+                          return this.lang.success.titleWaterfallEntry__i.interpolate(
+                            {
+                              index,
+                              total,
+                              titleIndex,
+                              space,
+                              titleKey,
+                              title,
+                            },
+                          );
+                        })
+                        .join("\n"),
+                    );
+                })(data.files[i].titles, i + 1, totalLength),
+              );
+              success(
+                this.lang.success.sortAsTitle__i.interpolate({
+                  index: i + 1,
+                  total: totalLength,
+                  title: data.files[i].sortAsTitle,
+                }),
+              );
+              success(
+                this.lang.success.filePath__i.interpolate({
+                  index: i + 1,
+                  total: totalLength,
+                  filePath: data.files[i].filePath,
+                }),
+              );
+              success(
+                this.lang.success.startDir__i.interpolate({
+                  index: i + 1,
+                  total: totalLength,
+                  startDir: data.files[i].startInDirectory,
+                }),
+              );
+              success(
+                this.lang.success.completeShortcut__i.interpolate({
+                  index: i + 1,
+                  total: totalLength,
+                  // (wrapped: SRM's launch script, which runs the game)
+                  shortcut: data.files[i].launchWrapper
+                    ? data.files[i].modifiedExecutableLocation
+                    : `${data.files[i].modifiedExecutableLocation} ${data.files[i].argumentString}`.trim(),
+                }),
+              );
+              if (data.files[i].launchWrapper) {
+                const wrapper = data.files[i].launchWrapper;
+                success(
+                  this.lang.success.wrappedGame__i.interpolate({
+                    index: i + 1,
+                    total: totalLength,
+                    command: wrapper.launch
+                      ? `${wrapper.launch.file} ${wrapper.launch.arguments ?? ""}`.trim()
+                      : `${wrapper.target} ${data.files[i].argumentString}`.trim(),
+                  }),
+                );
+              }
+              if (data.files[i].steamCategories.length > 0) {
+                success(
+                  this.lang.success.steamCategories__i.interpolate({
+                    index: i + 1,
+                    total: totalLength,
+                    steamCategories: data.files[i].steamCategories,
+                  }),
+                );
+                for (let j = 1; j < data.files[i].steamCategories.length; j++) {
+                  success(
+                    this.lang.success.steamCategoriesInfo__i.interpolate({
+                      index: i + 1,
+                      total: totalLength,
+                      steamCategories: data.files[i].steamCategories,
+                    }),
+                  );
+                }
+              }
+              success(
+                this.lang.success.imagePool__i.interpolate({
+                  index: i + 1,
+                  total: totalLength,
+                  imagePool: data.files[i].imagePool,
+                }),
+              );
+              if (data.files[i].onlineImageQueries.length) {
+                success(
+                  this.lang.success.firstImageQuery__i.interpolate({
+                    index: i + 1,
+                    total: totalLength,
+                    query: data.files[i].onlineImageQueries[0],
+                  }),
+                );
+                for (
+                  let j = 1;
+                  j < data.files[i].onlineImageQueries.length;
+                  j++
+                ) {
+                  success(
+                    this.lang.success.imageQueries__i.interpolate({
+                      index: i + 1,
+                      total: totalLength,
+                      query: data.files[i].onlineImageQueries[j],
+                    }),
+                  );
+                }
+              }
+              for (const artworkType of artworkTypes) {
+                if (data.files[i].resolvedDefaultImages[artworkType].length) {
+                  success(
+                    this.lang.success.resolvedDefaultImage__i.interpolate({
+                      index: i + 1,
+                      total: totalLength,
+                      artworkType: artworkSingDict[artworkType],
+                    }),
+                  );
+                  for (
+                    let j = 0;
+                    j < data.files[i].resolvedDefaultImages[artworkType].length;
+                    j++
+                  ) {
+                    success(
+                      this.lang.success.indexInfo__i.interpolate({
+                        index: i + 1,
+                        total: totalLength,
+                        indexed:
+                          data.files[i].resolvedDefaultImages[artworkType][j],
+                      }),
+                    );
+                  }
+                }
+                if (data.files[i].defaultImage[artworkType]) {
+                  success(
+                    this.lang.success.defaultImage__i.interpolate({
+                      index: i + 1,
+                      total: totalLength,
+                      artworkType: artworkSingDict[artworkType],
+                      image: data.files[i].defaultImage[artworkType],
+                    }),
+                  );
+                }
+                if (data.files[i].resolvedLocalImages[artworkType].length) {
+                  success(
+                    this.lang.success.resolvedLocalImages__i.interpolate({
+                      index: i + 1,
+                      total: totalLength,
+                      artworkType: artworkViewNames[artworkType],
+                    }),
+                  );
+                  for (
+                    let j = 0;
+                    j < data.files[i].resolvedLocalImages[artworkType].length;
+                    j++
+                  ) {
+                    success(
+                      this.lang.success.indexInfo__i.interpolate({
+                        index: i + 1,
+                        total: totalLength,
+                        indexed:
+                          data.files[i].resolvedLocalImages[artworkType][j],
+                      }),
+                    );
+                  }
+                }
+                if (data.files[i].localImages[artworkType].length) {
+                  success(
+                    this.lang.success.localImages__i.interpolate({
+                      index: i + 1,
+                      total: totalLength,
+                      artworkType: artworkViewNames[artworkType].toLowerCase(),
+                    }),
+                  );
+                  for (
+                    let j = 0;
+                    j < data.files[i].localImages[artworkType].length;
+                    j++
+                  ) {
+                    success(
+                      this.lang.success.indexInfo__i.interpolate({
+                        index: i + 1,
+                        total: totalLength,
+                        indexed: data.files[i].localImages[artworkType][j],
+                      }),
+                    );
+                  }
+                }
+              }
+            }
+            logSuccess();
+            if (data.failed.length > 0) {
+              this.loggerService.info("");
+              error(this.lang.error.failedToMatch);
+              for (let i = 0; i < data.failed.length; i++) {
+                error(
+                  this.lang.error.failedFileInfo__i.interpolate({
+                    index: data.files.length + i + 1,
+                    total: totalLength,
+                    filename: data.failed[i],
+                  }),
+                );
+              }
+            }
+            if (data.excluded.length > 0) {
+              this.loggerService.info("");
+              this.loggerService.info(this.lang.info.userExclusions);
+              for (let i = 0; i < data.excluded.length; i++) {
+                this.loggerService.info(
+                  this.lang.info.excludedFileInfo__i.interpolate({
+                    index: data.files.length + data.failed.length + i + 1,
+                    total: totalLength,
+                    filename: data.excluded[i].filePath,
+                    exceptionKey: data.excluded[i].title,
+                  }),
+                );
+              }
+            }
+            logError();
+          } else {
+            this.loggerService.info("");
+            this.loggerService.info(this.lang.info.nothingWasFound);
+          }
+          this.loggerService.info("");
+          this.loggerService.info(this.lang.info.testCompleted);
+        })
+        .catch((error) => {
+          this.loggerService.error(this.lang.error.testFailed);
+          this.loggerService.error(error);
+        });
+      this.loggerService.info(
+        this.lang.info.testStarting__i.interpolate({
+          title: config.configTitle || this.lang.text.noTitle,
+          version: APP.version,
+          portable: APP.srmdir
+            ? this.lang.text.portable
+            : this.lang.text.nonPortable,
+        }),
+      );
+      this.loggerService.info(
+        this.lang.info.opSys__i.interpolate({
+          os: APP.os,
+        }),
+      );
+      this.router.navigateByUrl("/logger");
+    } else {
+      this.loggerService.error(this.lang.error.cannotTestInvalid, {
+        invokeAlert: true,
+        alertTimeout: 3000,
+      });
+    }
+  }
+
+  moveUp() {
+    if (this.configurationIndex > 0) {
+      this.parsersService.swapIndex(
+        this.configurationIndex,
+        this.configurationIndex - 1,
+      );
+    }
+  }
+
+  moveDown() {
+    if (this.configurationIndex + 1 < this.userConfigurations.length) {
+      this.parsersService.swapIndex(
+        this.configurationIndex,
+        this.configurationIndex + 1,
+      );
+    }
+  }
+
+  undoChanges() {
+    this.parsersService.setCurrentConfiguration(this.configurationIndex, null);
+  }
+
+  chooseAccounts() {
+    let steamDirInput = this.userForm.get("steamDirectory").value || "";
+    let steamDir = this.parsersService.parseSteamDir(steamDirInput);
+    if (this.parsersService.validate("steamDirectory", steamDir) == null) {
+      this.chooseUserAccountsVisible = true;
+      this.steamDirectoryForChooseAccounts = steamDir;
+    }
+  }
+
+  setUserAccounts(accounts: string[]) {
+    if (accounts && this.chooseAccountsControl) {
+      this.chooseAccountsControl.setValue(accounts);
+    }
+  }
+
+  exitChooseAccounts() {
+    this.chooseUserAccountsVisible = false;
+  }
+
+  private observeField(path: string | string[], decider: (x: any) => boolean) {
+    return concat(
+      of(this.userForm.get(path).value),
+      this.userForm.get(path).valueChanges,
+    ).pipe(map(decider));
+  }
+  // Hidden unless the field applies to the parser as it stands (the rules
+  // are shared with the command line: core/parser-fields.ts).
+  private hiddenUnlessApplies(id: string) {
+    const field = commonField(id);
+    return concat(of(null), this.userForm.valueChanges).pipe(
+      map(() => !field.appliesTo(this.userForm.getRawValue())),
+      distinctUntilChanged(),
+    );
+  }
+  private isHiddenIfNoProvider(providerKey: OnlineProviderType) {
+    return this.observeField(
+      "imageProviders",
+      (selectedProviders: OnlineProviderType[]) => {
+        return !selectedProviders || !selectedProviders.includes(providerKey);
+      },
+    );
+  }
+  private isHiddenIfNotRomsParser() {
+    return this.observeField(
+      "parserType",
+      (pType: ParserType) =>
+        !pType || parserInfo.superTypesMap[pType] !== parserInfo.ROMType,
+    );
+  }
+  private isHiddenIfArtworkOnlyParser() {
+    return this.observeField(
+      "parserType",
+      (pType: ParserType) =>
+        !pType ||
+        parserInfo.superTypesMap[pType] === parserInfo.ArtworkOnlyType,
+    );
+  }
+  private isHiddenIfArtworkOnlyOrNotLinuxParser() {
+    return combineLatest([
+      this.isHiddenIfArtworkOnlyParser(),
+      of(APP.osType !== "Linux"),
+    ]).pipe(map(([artworkOnly, notLinux]) => artworkOnly || notLinux));
+  }
+
+  private isHiddenIfNoParserInputs() {
+    return this.observeField("parserType", (pType: ParserType) => {
+      return !pType || !parserInfo.availableParserInputs[pType].length;
+    });
+  }
+
+  // Sets every field of the form: the parser's defaults overlaid with its
+  // unsaved edits or saved config. (patchValue would leave fields the config
+  // lacks holding whatever was there before.)
+  private resetForm(config: UserConfiguration) {
+    this.userForm.reset(
+      _.mergeWith(
+        {},
+        this.parsersService.getDefaultValues(),
+        _.cloneDeep(config),
+        (_default: unknown, value: unknown) =>
+          Array.isArray(value) ? value : undefined,
+      ),
+    );
+  }
+
+  private loadConfiguration() {
+    const index = this.configurationIndex;
+    if (!this.userForm || this.userConfigurations === undefined) {
+      this.loadedIndex = null;
+    } else if (index !== -1) {
+      const config = this.userConfigurations[index];
+      const source = config.current ? config.current : config.saved;
+      if (source !== this.lastWritten) {
+        this.formChanges.unsubscribe();
+        this.resetForm(source);
+        this.markAsDirtyDeep(this.userForm);
+        this.formChanges = this.userForm.valueChanges.subscribe(
+          (data: UserConfiguration) => {
+            this.lastWritten = data;
+            const entry =
+              this.userConfigurations[this.configurationIndex] ?? config;
+            if (entry.current == null)
+              this.parsersService.setCurrentConfiguration(
+                this.configurationIndex,
+                data,
+              );
+            else entry.current = data;
+          },
+        );
+      }
+      this.isUnsaved = config.current != null;
+      this.loadedIndex = index;
+    } else if (this.parserId === "new") {
+      if (this.loadedIndex !== -1) {
+        this.formChanges.unsubscribe();
+        this.resetForm(this.parsersService.getDefaultValues());
+        this.userForm.markAsPristine();
+      }
+      this.loadedIndex = -1;
+    } else {
+      this.loadedIndex = null; // the parser is gone (deleted)
+    }
+
+    this.changeRef.detectChanges();
+  }
+
+  private markAsDirtyDeep(control: FormGroup): void {
+    control.markAsDirty();
+    if (control["controls"] !== undefined) {
+      for (let childKey in control.controls) {
+        this.markAsDirtyDeep(control.get(childKey) as FormGroup);
+      }
+    }
+  }
+
+  private highlight(input: string, tag: string) {
+    let output = "";
+    if (this.vParser.setInput(input).parse()) {
+      this.vParser.traverseAST((ast, item, level, passedData: string[]) => {
+        if (level === 0) {
+          if (item.type === "string") {
+            output += ast.input.substring(item.range.start, item.range.end);
+          } else {
+            let modLevel = level % 3;
+            output += `<${tag} class="level-${modLevel}">${ast.leftDelimiter}</${tag}>${passedData ? passedData.join("") : ""}<${tag} class="level-${modLevel}">${ast.rightDelimiter}</${tag}>`;
+          }
+        } else {
+          if (item.type === "string") {
+            return ast.input.substring(item.range.start, item.range.end);
+          } else {
+            let modLevel = level % 3;
+            return `<${tag} class="level-${modLevel}">${ast.leftDelimiter}</${tag}>${passedData ? passedData.join("") : ""}<${tag} class="level-${modLevel}">${ast.rightDelimiter}</${tag}>`;
+          }
+        }
+      }, false);
+    } else output = input;
+    return output;
+  }
+
+  private removeControllers() {
+    let configTitle = this.userForm.get("configTitle").value;
+    this.loggerService.info(
+      this.lang.info.removingControllers__i.interpolate({
+        configTitle: configTitle,
+      }),
+    );
+    let steamDirInput = this.userForm.get("steamDirectory").value || "";
+    let steamDir = this.parsersService.parseSteamDir(steamDirInput);
+    if (this.parsersService.validate("steamDirectory", steamDir) == null) {
+      let userAccountsInfo = this.userForm.get("userAccounts").value;
+      let parserId = this.parsersService.getParserId(this.configurationIndex);
+      this.parsersService
+        .parseUserAccounts(userAccountsInfo, steamDir)
+        .then((userIds) => {
+          for (let userId of userIds) {
+            this.parsersService.removeControllers(steamDir, userId, parserId);
+          }
+          this.loggerService.success(
+            this.lang.success.removedControllers__i.interpolate({
+              configTitle: configTitle,
+            }),
+            { invokeAlert: true, alertTimeout: 3000 },
+          );
+        })
+        .catch((error) => {
+          this.loggerService.error(this.lang.error.errorRemovingControllers, {
+            invokeAlert: true,
+            alertTimeout: 3000,
+          });
+          this.loggerService.error(error);
+        });
+    } else {
+      this.loggerService.error(this.lang.error.cannotRemoveControllers, {
+        invokeAlert: true,
+        alertTimeout: 3000,
+      });
+    }
+  }
+
+  private async fetchControllerTemplates(force: boolean = true) {
+    if (force) {
+      this.loggerService.info(this.lang.info.fetchingControllerTemplates);
+    }
+    let steamDirInput = this.userForm.get("steamDirectory").value || "";
+    let steamDir = this.parsersService.parseSteamDir(steamDirInput);
+    if (this.parsersService.validate("steamDirectory", steamDir) == null) {
+      if (force || !this.parsersService.controllerTemplates[steamDir]) {
+        this.parsersService.controllerTemplates[steamDir] =
+          (await this.parsersService.getAllControllerTemplates(steamDir)) ?? {};
+        this.parsersService.saveControllerTemplates();
+      }
+      for (let controllerType of Object.keys(
+        this.parsersService.controllerTemplates[steamDir],
+      )) {
+        (
+          (this.nestedGroup.children.controllers as NestedFormElement.Group)
+            .children[controllerType] as NestedFormElement.Select
+        ).values = this.parsersService.controllerTemplates[steamDir][
+          controllerType
+        ].map((template) => {
+          return { displayValue: template.title, value: template };
+        });
+      }
+      if (force) {
+        this.loggerService.success(this.lang.success.fetchedTemplates, {
+          invokeAlert: true,
+          alertTimeout: 3000,
+        });
+      }
+    } else if (force) {
+      this.loggerService.error(this.lang.error.cannotFetchTemplates, {
+        invokeAlert: true,
+        alertTimeout: 3000,
+      });
+    }
+    await this.fetchCompatTools();
+  }
+
+  // Populate the "Force compatibility tool" dropdown from the tools installed on
+  // disk (per this parser's Steam install plus system roots), followed by a
+  // "Custom…" entry that reveals the free-text field.
+  private async fetchCompatTools() {
+    const steamDirInput = this.userForm?.get("steamDirectory")?.value || "";
+    const steamDir = this.parsersService.parseSteamDir(steamDirInput);
+    const dirs = steamDir ? [steamDir] : [];
+    const tools: CompatToolInfo[] = await this.coreClient.client.call(
+      "support",
+      "compatTools",
+      dirs,
+    );
+    (
+      this.nestedGroup.children.compatToolName as NestedFormElement.Select
+    ).values = [
+      ...tools.map((t) => ({ displayValue: t.displayName, value: t.name })),
+      { displayValue: this.lang.text.compatCustom, value: COMPAT_CUSTOM },
+    ];
+    this.changeRef.detectChanges();
+  }
+}

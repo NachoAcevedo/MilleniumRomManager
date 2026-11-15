@@ -1,0 +1,261 @@
+# Steam ROM Manager
+
+[![Build Status](https://github.com/SteamGridDB/steam-rom-manager/actions/workflows/main.yml/badge.svg)](https://github.com/SteamGridDB/steam-rom-manager/actions/workflows/main.yml)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/w/SteamGridDB/steam-rom-manager?logo=github&label=commits)](https://github.com/SteamGridDB/steam-rom-manager/commits/master)
+[![GitHub all releases](https://img.shields.io/github/downloads/SteamGridDB/steam-rom-manager/total?logo=github)](https://github.com/SteamGridDB/steam-rom-manager/releases)
+[![demo](https://img.shields.io/discord/488621078302949377?logo=discord)](https://discord.gg/bnSVJrz)
+![Stars](https://raw.githubusercontent.com/SteamGridDB/steam-rom-manager/star-tracker-data/stars-badge.svg)
+[![Chocolatey](https://img.shields.io/chocolatey/dt/steam-rom-manager?color=blue&label=Chocolatey%20package)](https://community.chocolatey.org/packages/steam-rom-manager)
+[![Crowdin](https://badges.crowdin.net/steam-rom-manager/localized.svg)](https://crowdin.com/project/steam-rom-manager)
+
+<!-- Discord Tags are broken by discord rate limiting, see https://github.com/badges/shields/issues/10223
+[![Discord](https://img.shields.io/discord/488621078302949377?color=5865F2&label=SRM&logo=discord&logoColor=white)](https://discord.gg/bnSVJrz)
+A temporary fix is to host the tag service myself-->
+
+# Overview
+
+Steam ROM Manager (SRM) is a super flexible tool for adding non-Steam games to Steam in bulk and managing their artwork assets and controller templates. Added games could be ROMs for emulators, games from other stores such as Epic or GOG, or even not games at all. Have you always wanted your notes from junior year as a category in steam? If so that's pretty weird! But now it's possible.
+
+For an overview of how SRM works see [here](https://steamgriddb.github.io/steam-rom-manager/). There is plenty of documentation available in the app's built in FAQ and documentation, and if you need further help there are expert users to be found on the [SGDB discord](https://discord.gg/bnSVJrz) under the Steam ROM Manager category and the [SRM subreddit](https://www.reddit.com/r/SteamRomManager/).
+
+Check out the [releases page](https://github.com/SteamGridDB/steam-rom-manager/releases) for compiled downloads for Windows (exe, msi), macOS (dmg), and Linux (AppImage, deb).
+
+The Windows version is also available as a [Chocolatey package](https://community.chocolatey.org/packages/steam-rom-manager).
+
+The Linux version is also available as a [Flatpak](https://flatpak.org) at [Flathub/steam-rom-manager](https://flathub.org/apps/details/com.steamgriddb.steam-rom-manager). Linux caveats:
+
+- On some distributions Flatpak must be [pre-configured manually](https://flatpak.org/setup).
+- The AppImage needs to be [made executable](http://discourse.appimage.org/t/how-to-make-an-appimage-executable/80) after download.
+
+If you're on a Steam Deck we recommend setting everything up through [EmuDeck](https://www.emudeck.com/), as it will install and automatically configure Steam ROM Manager and whatever emulators you want.
+
+# Support SteamGridDB
+
+If you enjoy Steam ROM Manager and want it to continue to be useful consider supporting [SteamGridDB](https://www.steamgriddb.com/)'s Patreon. [SteamGridDB](https://www.steamgriddb.com/) hosts all of the artwork Steam ROM Manager uses to make your Steam library the envy of the town, so we should probably help them keep their lights on.
+
+<a href="https://www.patreon.com/steamgriddb">
+    <img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" height="38">
+</a>
+
+# Parsers
+
+Parsers are the heart and soul of SRM. If Steam is the octopus, then these are its tentacles &mdash; reaching into your ROM directories and the databases and manifest files of other game stores and pulling out the games you want.
+
+## ROM Parsers
+
+ROM parsers allow one to import shortcuts using search strings, e.g. `games/${title}.@(iso|rvz)`, or in the case of the manual parser by specifying ROM locations directly.
+|Parsers|Windows|Mac OS|Linux|Description|
+|---|---|---|---|---|
+|Glob|✅|✅|✅|Parsing using simple `glob` style search strings|
+|Glob-regex|✅|✅|✅|Parsing using `reg-ex` style search strings|
+|Manual|✅|✅|✅|Parsing using a JSON file specifying locations|
+
+## Platform Parsers
+
+In addition to flexible importing of ROMS, SRM now has several _platform parsers_ for importing from popular game stores:
+
+| Parser                                                             | Windows | Mac OS | Linux | Launch Modes                                                          |
+| ------------------------------------------------------------------ | ------- | ------ | ----- | --------------------------------------------------------------------- |
+| [Amazon Games](https://gaming.amazon.com/amazon-games-app)         | ✅      | 🟦     | 🟦    | <ul><li>Launch via Amazon Games</li><li>Launch via executable</li>    |
+| [EA Desktop](https://www.ea.com/ea-app)                            | ✅      | 🟦     | 🟦    | <ul><li>Launch via EA Desktop</li><li>Launch via executable</li>      |
+| [Epic](https://store.epicgames.com/en-US/)                         | ✅      | ✅     | 🟦    | <ul><li>Launch via Epic</li><li>Launch via executable</li>            |
+| [GOG Galaxy](https://www.gog.com/galaxy)                           | ✅      | ✅     | 🟦    | <ul><li>Launch via GOG Galaxy</li><li>Launch via executable</li>      |
+| [Itch.io](https://itch.io/app)                                     | ✅      | ✅     | ✅    | <ul><li>Launch via executable</li></ul>                               |
+| [Legendary](https://github.com/derrod/legendary)                   | ✅      | ✅     | ✅    | <ul><li>Launch via Legendary</li><li>Launch via executable</li></ul>  |
+| [Ubisoft Connect](https://ubisoftconnect.com/en-US/)               | ✅      | ❌     | 🟦    | <ul><li>Launch via Ubisoft Connect</li><li>Launch via executable</li> |
+| [UWP/XBox](https://www.xbox.com/en-US/xbox-game-pass/pc-game-pass) | ✅      | 🟦     | 🟦    | <ul><li>Launch via UWP</li><li>Launch via executable</li>             |
+| [Battle.net](https://battle.net)                                   | ✅      | ❌     | 🟦    | <ul><li>Launch via Battle.net</li></ul>                               |
+| [GitHub Launcher](https://github.com/SirDiabo/GithubLauncher)      | ✅      | ❌     | ❌    | <ul><li>Launch via executable</li></ul>                               |
+| [Quiver Launcher](https://github.com/tgeorgiadis/quiver-launcher)  | ✅      | ❌     | ❌    | <ul><li>Launch via executable</li></ul>                               |
+
+✅ Implemented
+❌ Planned
+🟦 Store not present
+
+We are open to suggestions and pull requests if you would like a platform parser added!
+
+## Artwork Only Parsers
+
+Artwork only parsers allow you to change the artwork for existing non-SRM games. Put it simply they just change artwork, they don't add shortcuts.
+|Parser|Windows|Mac OS|Linux|Description|
+|---|---|---|---|---|
+|Steam|✅|✅|✅|Manages artwork for Steam Games|
+|Non-SRM Shortcuts|✅|✅|✅|Manages artwork for Steam Shortcuts not added via SRM|
+
+# For developers
+
+## Command Line Interface
+
+SRM has a fully featured command line interface, documented in the [wiki](https://github.com/SteamGridDB/steam-rom-manager/wiki/Command-Line-Interface). `srm --help` lists the commands.
+
+Parsers can be created, changed, viewed and deleted from it (`create`, `edit`, `view`, `delete`), and every command that takes parsers accepts their ids or names. Every setting the parser editor has is an option, with the same required settings and the same checks: both read the field catalog in `src/core/parser-fields.ts`, and its tests keep "required" in step with validation. `srm create --ptype <type> --help` lists that type's settings, required ones first.
+
+The command line also comes on its own, without the app: `srm-cli-<version>-<os>-<arch>` in each release (Windows `.exe`; Linux and macOS `.tar.gz` holding `srm`), for x64 and arm64. It's a single executable (Node's [single executable applications](https://nodejs.org/api/single-executable-applications.html)) with the same commands, and it uses the installed app's data (`steam-rom-manager/userData` in the system's app data folder), or a `userData` folder next to it if there is one (portable). `SRM_USER_DATA_DIR` overrides both. Build it with `yarn build:cli` (this OS, both architectures); `scripts/build-cli.ts` has the details.
+
+## Building SRM
+
+To compile this app, you'll need the latest `Node.js` and `yarn`. Every script will need to be run from the project directory.
+
+Before running any scripts, dependencies must be installed using:
+
+```
+yarn install
+```
+
+## Scripts
+
+All script must be run using `yarn run` command. For example, `yarn run watch:renderer`.
+
+| Script             | Function                                                            |
+| ------------------ | ------------------------------------------------------------------- |
+| `postinstall`      | Recompiles native apps to match Electron's NodeJS version if needed |
+| `start`            | Launches compiled app                                               |
+| `watch:main`       | Compiles Electron app and watches for changes                       |
+| `watch:renderer`   | Compiles a renderer for an Electron app and watches for changes     |
+| `build:main`       | Compiles Electron app in production mode                            |
+| `build:renderer`   | Compiles a renderer for an Electron app in production mode          |
+| `build:dist`       | Runs `build:main` and `build:renderer`                              |
+| `build:win`        | Compiles an executable installer for Windows                        |
+| `build:linux`      | Compiles a `deb` package and `AppImage` for linux                   |
+| `build:linuxdir`   | Builds an unpacked linux x64 version for use with flatpak           |
+| `build:flatpak`    | Builds a flatpak from the unpacked linux version                    |
+| `build:docker`     | `build:win` and `build:linux` joined together                       |
+| `build:mac`        | Compiles a `dmg` package for MacOS                                  |
+| `build:cli-bundle` | Compiles the standalone command line to `dist-cli/srm.js`           |
+| `build:cli`        | Builds the standalone command line's executables into `release/cli` |
+
+## Text and translations
+
+All UI text lives in `src/lang/en-US`: `langStrings.json`, plus the docs in `markdown/` (listed in `src/lang/index.ts`). Never hard-code English in components or templates: add a key to `en-US/langStrings.json` and use it (`{{ lang.yourKey }}`, or `lang.yourKey__i.interpolate({ ... })` for strings with `${variables}`). The types come from en-US, so TypeScript catches a mistyped or missing key.
+
+Translations are done on [Crowdin](https://crowdin.com/project/steam-rom-manager), which exports them to the `l10n_master` branch. Every other language is laid over en-US, so whatever a language lacks or has out of date (a new key, a reshaped one, changed `${variables}`) shows in English instead of breaking anything. After merging translations or reshaping en-US keys, run `yarn lang:sync`: it brings each language folder into en-US's layout, keeping only real translations, and prints how complete each language is. `yarn lang:check` (and the tests) fail when a folder is out of sync.
+
+## Themes
+
+Every color, font, radius, shadow and timing in the UI is a design token, listed in `src/renderer/theme/tokens.ts` (what each is for is in the language files: `settings.component.themeEditor.tokens`) and set as a CSS variable (`var(--srm-accent)`). Stylesheets use tokens, never colors of their own (the tests check this). The base theme in `src/renderer/theme/themes.ts` sets every token; a theme only sets what it changes.
+
+Themes are JSON files, in two places:
+
+- **App themes** (`src/themes/default/`): Deck, Classic, EmuDeck, Sunset, Solarized Dark and Solarized Light. They're built into SRM, so they're always there, and SRM writes copies of them to `themes/default` in its data folder as examples.
+- **User themes** (`themes/user` in SRM's data folder): any JSON file there shows up in Settings under "Your themes". Settings > Theme editor creates, edits (with a live preview on the whole app), saves and deletes them; app themes can be duplicated there. Unknown tokens and invalid values are skipped and reported in the log.
+
+```json
+{
+  "name": "Sunset",
+  "colorScheme": "dark",
+  "layout": "Deck",
+  "tokens": {
+    "accent": "#ff7a00",
+    "accent-hover": "#ff9433",
+    "accent-gradient": "linear-gradient(135deg, #ff7a00 0%, #ff3d6e 100%)",
+    "icon-filter": "none",
+    "radius-art": "16px"
+  }
+}
+```
+
+`colorScheme` (`dark` or `light`) sets the colors of the browser's own controls. `layout` (`Deck`, the default, `Classic` or `EmuDeck`) picks how the screens are arranged, independently of colors. `icon-filter` adjusts SRM's white icons; light themes darken them, e.g. `brightness(0.38)`.
+
+## Debugging an app
+
+Run `watch:main` (usually once since one rarely changes anything in the main Electron process) and `watch:renderer`.
+Each command creates separate `webpack` instance which will watch referenced files for changes and will recompile app.
+
+App can be run using the `start` script; to test the CLI use `npx electron ./dist/main.bundle.js [command] [flags]` (`--help` lists the commands). Both use the data folder `%APPDATA%\Electron\userData` (`~/.config/Electron/userData` on Linux). `npx electron .` works too, but it uses the installed SRM's data folder. Set `SRM_USER_DATA_DIR` to use any other folder. After every recompile by `watch:renderer`, app can be refreshed using `Ctrl + R`, however `watch:main` requires a restart (as do both watchers when the webpack configs change).
+
+`Ctrl + Shift + I` can be used to launch Chrome inspector once the app is running. This works even in the release version.
+
+### For Windows
+
+Scripts must be run in this order:
+
+```
+yarn run build:dist
+yarn run build:win
+```
+
+### For MacOS
+
+Scripts must be run in this order:
+
+```
+yarn run build:dist
+yarn run build:mac
+```
+
+### For linux
+
+Scripts must be run in this order:
+
+```
+yarn run build:dist
+yarn run build:linux
+```
+
+### For linux flatpak
+
+Unfortunately electron-builder does not yet competently build flatpaks, and the older approach using electron-packager and electron-installer-flatpak can't handle native modules. A work-around is to use electron-builder for the packaging step and electron-installer-flatpak for the actual flatpak creation.
+
+First you need to run `yarn install -g @malept/electron-installer-flatpak` (this can't be added as dev-dependency since it is not cross-platform and yarn doesn't allow optional dev-dependencies).
+
+Then
+
+```
+yarn run build:dist
+yarn run build:linuxdir
+yarn run build:flatpak
+```
+
+In order for this to work you must have already installed `flatpak-builder` using your favorite package manager (e.g. `sudo pamac install flatpak-builder`) and run:
+
+```
+flatpak install flathub org.freedesktop.Platform//19.08;
+flatpak install org.freedesktop.Sdk//19.08;
+flatpak install org.electronjs.Electron2.BaseApp/x86_64/stable
+```
+
+## Updating dependencies
+
+Use `npx ncu` to list available dependency updates, and `npx ncu -u target [target]` to update, where `[target]` is either `patch`, `minor`, `latest`, `greatest`, or `newest`.
+
+## Related Projects
+
+Some other projects in the emulation-adjacent space we think you might be interested in!
+
+### Front ends
+
+- [ES-DE](https://gitlab.com/es-de/emulationstation-de) - A top tier emulation front end.
+- [Playnite](https://github.com/JosefNemec/Playnite) - A general purpose front end with lots of importers.
+- [Firelight](https://github.com/firelight-emulator/firelight) - An upcoming front end specifically for emulation with built in achievements.
+
+### Configurators
+
+- [EmuDeck](https://github.com/dragoonDorise/EmuDeck) - A collection of scripts for downloading and managing emulators and front ends alike.
+- [RetroDeck](https://retrodeck.net/) - Configurator for downloading and managing emulators and front ends alike, focused on the Steam Deck and Linux Desktop.
+
+### ROM Managers
+
+- [Romm](https://github.com/rommapp/romm?tab=readme-ov-file) - A rom manager with a web UI.
+- [Oxyromon](https://github.com/alucryd/oxyromon) - A CLI based rom manager.
+- [JRomManager](https://github.com/optyfr/JRomManager) - A java based rom manager.
+
+### Steam Artwork Tools
+
+- [Steam Art Manager](https://github.com/Tormak9970/Steam-Art-Manager) - An artwork manager for Steam games.
+- [SGDBoop](https://github.com/SteamGridDB/SGDBoop) - Tool to enable choosing artwork for in Steam directly from steamgriddb's website.
+
+## Star History
+
+![Star History](https://raw.githubusercontent.com/SteamGridDB/steam-rom-manager/star-tracker-data/charts/star-history.svg)
+
+## Our Competition
+
+These tools are the closest to SRM in function, that is importing games/ROMs into Steam.
+
+- [Steam Rom Mate](https://github.com/brenoprata10/steam-deck-romate) - An alternative to SRM made with the Steam Deck in mind.
+- [BoilR](https://github.com/PhilipK/BoilR) - An alternative to SRM focused on importing from other game libraries.
+- [Ice](https://github.com/scottrice/Ice) - The steam importer that started it all, now defunct.
+
+## License
+
+Steam ROM Manager is free software: you can redistribute it and/or modify it under the terms of the [GNU General Public License](LICENSE) as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.

@@ -1,0 +1,109 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [master]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2022, macOS-latest]
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4.1.6
+
+      - name: Setup Python environment
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: "3.10"
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 24
+          check-latest: true
+
+      - name: Install dependencies
+        run: |
+          npm install -g yarn@1.22
+          yarn install --frozen-lockfile
+
+      - name: Build Distribution
+        run: |
+          git lfs pull
+          yarn run presets:validate
+          yarn run build:dist
+        env:
+          SENTRY_AUTH: ${{ secrets.SENTRY_AUTH }}
+
+      # The command line on its own (no Electron): one executable per
+      # architecture for this OS, in release/cli (see scripts/build-cli.ts).
+      - name: Build CLI
+        run: yarn run build:cli
+
+      - name: Build Linux
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: yarn run build:linux --publish=onTagOrDraft
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+      - name: Build Windows
+        if: ${{ matrix.os == 'windows-2022' }}
+        run: yarn run build:win --publish=onTagOrDraft
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+
+      - name: Build Mac
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: yarn run build:mac --publish=onTagOrDraft
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+
+      # Like electron-builder's --publish=onTagOrDraft: attach the CLI to the
+      # draft release for this version, if there is one.
+      - name: Publish CLI
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "$(gh release view "v$VERSION" --json isDraft -q .isDraft 2>/dev/null)" = "true" ]; then
+            gh release upload "v$VERSION" release/cli/srm-cli-* --clobber
+          else
+            echo "No draft release v$VERSION; the CLI isn't published (it's in the artifacts)."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+
+      - name: Upload Artifacts CLI
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: srm-cli-${{ runner.os }}
+          path: release/cli/srm-cli-*
+
+      - name: Upload Artifacts Windows
+        uses: actions/upload-artifact@v4.3.3
+        if: ${{ matrix.os == 'windows-2022' }}
+        with:
+          name: srm-build-windows
+          path: |
+            release/*.exe
+            release/*.msi
+      - name: Upload Artifacts Mac
+        uses: actions/upload-artifact@v4.3.3
+        if: ${{ matrix.os == 'macOS-latest' }}
+        with:
+          name: srm-build-mac
+          path: release/*.dmg
+      - name: Upload Artifacts Linux
+        uses: actions/upload-artifact@v4.3.3
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        with:
+          name: srm-build-linux
+          path: |
+            release/*.deb
+            release/*.AppImage

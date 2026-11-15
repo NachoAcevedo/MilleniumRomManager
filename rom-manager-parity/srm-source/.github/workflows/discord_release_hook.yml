@@ -1,0 +1,25 @@
+name: Send Discord Webhook
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.6
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 22.2.0
+          check-latest: true
+
+      - name: Execute Discord webhook script
+        run: node discord_hook.js
+        env:
+          DISCORD_HOOK_ID: ${{ secrets.DISCORD_HOOK_ID }}
+          DISCORD_HOOK_TOKEN: ${{ secrets.DISCORD_HOOK_TOKEN }}
+          MSG_EDIT_ID: ${{ secrets.MSG_EDIT_ID }}

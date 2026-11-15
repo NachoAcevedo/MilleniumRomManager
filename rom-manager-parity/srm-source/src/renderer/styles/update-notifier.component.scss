@@ -1,0 +1,106 @@
+@import "mixins";
+
+:host {
+  width: var(--width-update-notifier-backdrop);
+  height: var(--height-update-notifier-backdrop);
+  position: var(--position-update-notifier-backdrop);
+  backdrop-filter: var(--filter-update-notifier-backdrop);
+  z-index: 9;
+  display: var(--display-update);
+
+  .update-notifier-content {
+    p {
+      margin-top: 0;
+    }
+  }
+
+  .progress {
+    height: 0.5em;
+    // (the notifier is as wide as its text: "Downloading update…" is short)
+    min-width: 20em;
+    margin: 0 0 0.5em;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--srm-surface-sunken);
+    border: 1px solid var(--srm-border-strong);
+
+    .progressFill {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--srm-accent);
+      transition: width 0.3s ease-out;
+    }
+  }
+
+  .progressDetail {
+    display: flex;
+    justify-content: space-between;
+    gap: 1em;
+    margin-bottom: 1em;
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+    color: var(--srm-text-muted);
+  }
+
+  &.hidden {
+    display: none;
+  }
+  .hidden {
+    display: none;
+  }
+  ::ng-deep a {
+    text-decoration: none;
+
+    color: var(--color-markdown-link);
+
+    &:hover {
+      color: var(--color-markdown-link-hover);
+    }
+
+    &:active {
+      color: var(--color-markdown-link-active);
+    }
+  }
+  > #updateNotification {
+    font-size: 1em;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    position: var(--position-update);
+    left: var(--position-update-notifier-left);
+    right: var(--position-update-notifier-right);
+    bottom: var(--position-update-notifier-bottom);
+    top: var(--position-update-notifier-top);
+    width: var(--width-update-notifier);
+    height: var(--height-update-notifier);
+
+    margin: var(--margin-update-notifier);
+    padding: var(--padding-update-notifier);
+
+    text-align: center;
+    word-wrap: break-word;
+
+    color: var(--color-alert-text);
+    border: solid var(--color-position-update-notifier-border);
+    border-width: var(--border-update-notifier-width);
+    background-color: var(--color-alert-background);
+
+    .goButton {
+      @include button();
+      @include clickButtonColor(click-button);
+      &.hidden {
+        display: none;
+      }
+      margin-left: 1em;
+    }
+    .noButton {
+      @include button();
+      @include clickButtonColor(dangerous-click-button);
+      &.hidden {
+        display: none;
+      }
+    }
+  }
+}

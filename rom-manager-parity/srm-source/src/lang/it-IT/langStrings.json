@@ -1,0 +1,409 @@
+{
+  "preview": {
+    "component": {
+      "filter": "Cerca un titolo",
+      "selectType": "Tipo di artwork",
+      "selectCategories": "Categoria di Steam",
+      "selectParsers": "Titolo del parser",
+      "selectTypeOptions": {
+        "long": "Banner",
+        "tall": "Poster",
+        "icon": "Icone",
+        "logo": "Loghi",
+        "games": "Tutti gli artwork"
+      },
+      "by": "da",
+      "refreshImages": "Aggiorna copertina",
+      "saveImage": "Salva copertina su file",
+      "addLocalImages": "Aggiungi copertina locale",
+      "retryDownload": "Riprova a scaricare la copertina",
+      "generateAppList": "Aggiorna",
+      "saveAppList": "Salva su Steam",
+      "removeAppList": "Rimuovi da Steam",
+      "remainingImages": "Recupero degli urls:",
+      "exportSelections": "Esporta copertina",
+      "importSelections": "Importa copertina",
+      "backButton": "Indietro",
+      "logButton": "Registro"
+    },
+    "service": {
+      "info": {
+        "listIsBeingGenerated": "La lista è in fase di elaborazione. Attendi.",
+        "listIsBeingSaved": "La lista è in fase di salvataggio. Attendi.",
+        "listIsBeingRemoved": "La lista è in fase di rimozione. Attendi.",
+        "listIsEmpty": "La lista è vuota.",
+        "populatingVDF_List": "Popolazione della lista VDF.",
+        "creatingBackups": "Backup in creazione.",
+        "readingVDF_Files": "Lettura dei files VDF.",
+        "mergingVDF_entries": "Unione voci VDF.",
+        "removingVDF_entries": "Rimozione di entries VDF e file di immagine.",
+        "savingCategories": "Salvataggio delle informazioni di categoria in localconfig.vdf.",
+        "savingControllers": "Salvataggio informazioni del controller.",
+        "removingFromCategories": "Rimozione di tutte le informazioni aggiunte alle categorie",
+        "updatingKnownSteamDirList": "Aggiornamento dell'elenco di directory di Steam note in corso.",
+        "retryingDownload__i": "Ritento il download delle immagini per \"${appTitle}\" da \"${imageUrl}\".",
+        "disabledConfigurations__i": "${count} configurazione/i utente è/sono state saltate (poiché disabilitate dall'utente).",
+        "invalidConfigurations__i": "${count} configurazione/i utente è/sono state saltate (poiché non valide).",
+        "executingParsers": "Esecuzione del parser.",
+        "shutdownSteam": "Se Steam è in esecuzione, chiudere Steam.",
+        "noParserConfigurations": "Creare prima la configurazione nel menu \"Configurazioni\", per favore.",
+        "parserFoundNoFiles": "Il/I parser non ha trovato file corrispondenti alla configurazione utente.",
+        "allImagesRetrieved": "Tutti gli URL di copertina disponibili sono stati recuperati.",
+        "providerTimeout__i": "Il timeout è stato richiesto da \"${provider}\" per ${time} secondi.",
+        "noAccountsWarning": "Account utente non trovato. Cartella di Steam non corretta?",
+        "preparingExport": "Preparazione dell'esportazione delle copertine scelte.",
+        "exportProgress__i": "Salvataggio delle copertine scelte: ${progress}.",
+        "readingSelections": "Applicazione delle copertine importate scelte."
+      },
+      "errors": {
+        "fatalError": "Si è verificato un errore fatale durante l'aggiunta dei giochi. Vedere il log eventi per i dettagli.",
+        "knownSteamDirListIsEmpty": "Una lista delle cartelle di Steam conosciute è vuota.",
+        "steamIsRunning": "Impossibile apportare modifiche mentre Steam è in esecuzione!",
+        "categorySaveError": "Errore nell'aggiornamento delle categorie. Vedi il log eventi per i dettagli.",
+        "categorySaveError__i": "Errore nella categoria (verranno comunque aggiunte scorciatoie e artwork): ${error}",
+        "controllerSaveError": "Errore nell'aggiornamento dei template dei controller. Vedi il log eventi per i dettagli.",
+        "controllerSaveError__i": "Errore Controller (verranno comunque aggiunte scorciatoie e artwork): ${error}",
+        "unknownProviderError__i": "Errore ricevuto da \"${provider}\" per \"${title}\":\n ${error}",
+        "exportError__i": "Non è stato possibile salvare la cartella di pacchetti selezionati: ${error}",
+        "importJSONFailError__i": "Impossibile importare le selezioni, JSON è stato malformato: ${error}"
+      },
+      "success": {
+        "writingVDF_entries": "Completata l'aggiunta/rimozione delle voci.",
+        "removingVDF_entries": "Le voci sono state rimosse."
+      }
+    }
+  },
+  "steamParser": {
+    "onlyInstalledTitle": "Cerca artwork solo per i titoli installati",
+    "sourceModsTitle": "Trova artwork per le mod non ufficiali",
+    "errors": {
+      "directoryInvalid": "> Cartella di Steam non valida.",
+      "noSteamAccounts": "> La cartella di Steam specificata non ha account.",
+      "steamChanged__i": "> Steam ha cambiato la struttura interna del database o il parser ha provato a leggere un database obsoleto.\nFile problematico: ${file}\nErrore completo:\n ${error}",
+      "fatalError__i": "> Il parser di Steam ha fallito con errore fatale:\n ${error}"
+    }
+  },
+  "manualParser": {
+    "manifestsInputTitle": "Cartella Manifests",
+    "errors": {
+      "fatalError__i": "> Il parser manuale ha fallito con errore fatale:\n ${error}"
+    }
+  },
+  "epicParser": {
+    "manifestsInputTitle": "Sovrascrittura Cartella Manifests di Epic",
+    "launcherModeInputTitle": "Avviare giochi tramite Epic per i servizi online",
+    "errors": {
+      "invalidManifestsOverride": "> Manifests Override non è una cartella valida.",
+      "epicNotCompatible": "> Epic Games Store non disponibile su Linux.\n Se si sta utilizzando Legendary su Linux è necessario impostare Manifests Override.",
+      "epicNotInstalled": "> Epic Games non sembra essere installato.",
+      "fatalError__i": "> Il parser di Epic Games ha fallito con errore fatale:\n ${error}"
+    }
+  },
+  "legendaryParser": {
+    "legendaryInstalledFileTitle": "Sovrascrittura del percorso installed.json di Legendary",
+    "errors": {
+      "legendaryNotInstalled": "> Legendary installed.json non trovato"
+    }
+  },
+  "UWPParser": {
+    "UWPDirTitle": "Sovrascrittura Cartella XboxGames",
+    "UWPLauncherModeTitle": "Avvia il gioco come UWP invece del launcher helper"
+  },
+  "uplayParser": {
+    "uplayDirTitle": "Sovrascrittura della Cartella Ubisoft",
+    "launcherModeInputTitle": "Avviare giochi tramite UPlay per i servizi online",
+    "errors": {
+      "invalidManifestsOverride": "> Uplay Directory Override non è una cartella valida.",
+      "uplayNotCompatible": ">Il Parser di UPlay è non disponibile su Linux o Mac.",
+      "uplayDirNotFound": "> La cartella UPlay specificata non esiste.",
+      "uplayNotInstalled": "> UPlay non installato nella directory specificata.",
+      "fatalError__i": "> Il parser di Uplay ha fallito con errore fatale:\n ${error}"
+    }
+  },
+  "gogParser": {
+    "galaxyExeOverrideTitle": "Sovrascrittura del percorso di Galaxy",
+    "launcherModeInputTitle": "Avviare giochi tramite GOG Galaxy",
+    "errors": {
+      "invalidGalaxyExeOverride": "> Galaxy Client Override non è un percorso valido.",
+      "fatalError__i": "> Il parser di GOG Galaxy ha fallito con errore fatale:\n ${error}",
+      "gogNotCompatible": "> Il parser di GOG Galaxy è attualmente disponibile solo su Windows.",
+      "gogNotInstalled": "> GOG Galaxy non sembra essere installato."
+    }
+  },
+  "amazonGamesParser": {
+    "exeOverrideTitle": "Sovrascrittura del percorso di Amazon Games",
+    "launcherModeInputTitle": "Avviare giochi tramite Amazon Games",
+    "errors": {
+      "invalidExeOverride": "> Amazon Games Installation Override non è una cartella valida.",
+      "osUnsupported": "> Il parser di Amazon Games ha fallito perché Amazon Games è disponibile solo su Windows.",
+      "databaseNotFound": "> File database di Amazon Games non trovato. Amazon Games probabilmente non è installato.",
+      "fatalError__i": "> Il parser di Amazon Games ha fallito con errore fatale:\n ${error}"
+    }
+  },
+  "itchIoParser": {
+    "itchIoAppDataOverrideTitle": "Sovrascrittura della cartella AppData di itch.io",
+    "itchIoWindowsOnLinuxInstallDriveRedirectTitle": "Reindirizzare il Disco d'installazione di Windows-on-Linux",
+    "errors": {
+      "invalidItchIoAppDataOverride": "> itch.io AppData Override non è una directory valida.",
+      "invalidItchIoWindowsOnLinuxInstallDriveRedirect": "> itch.io Windows-on-Linux Install Drive Redirect non è una cartella valida.",
+      "osUnsupported": "> Il parser di itch.io ha fallito perché supporta solo macOS, Linux e Windows al momento.",
+      "fatalError__i": "> Il parser di itch.io ha fallito con errore fatale:\n ${error}",
+      "databaseNotFound": "> File database di itch.io non trovato. itch.io probabilmente non è installato."
+    }
+  },
+  "eaDesktopParser": {
+    "eaGamesDirTitle": "Sovrascrittura Cartella EA Games",
+    "eaLauncherModeTitle": "Avviare giochi tramite EA Desktop",
+    "errors": {
+      "fatalError__i": "> Il parser di EA Desktop ha fallito con errore fatale:\n ${error}",
+      "invalidXML__i": "> File XML non valido ${dataFile}",
+      "eaNotCompatible": "> Il parser di EA Desktop supporta solo Windows."
+    }
+  },
+  "globParser": {
+    "errors": {
+      "noTitle__md": "> Il file glob deve contenere `${title}`!",
+      "moreThanOneTitle__md": "> Il file glob deve contenere solo un `${title}`!",
+      "noStarNextToTitle__md": "> La stella `*` non può essere vicina a `${title}`!",
+      "noAnyCharNextToTitle__md": "> Qualsiasi carattere `?` non può essere vicino a `${title}`!",
+      "noEmptyPattern__md": "> Il pattern non può essere vuoto!"
+    }
+  },
+  "globRegexParser": {
+    "inputPlaceholder": "${/regex valido/}",
+    "errors": {
+      "noEmptyPattern__md": "> Il pattern non può essere vuoto!",
+      "noEmptyCharRange__md": "> L'intervallo di caratteri non può essere vuoto!"
+    }
+  },
+  "sgdbProvider": {
+    "nsfwInputTitle": "Consenti artwork NSFW",
+    "humorInputTitle": "Consenti artwork divertenti",
+    "imageMotionTypesTitle": "Tipi di animazione consentiti",
+    "stylesTitle": "Stili griglia consentiti",
+    "stylesHeroTitle": "Stili hero consentiti",
+    "stylesLogoTitle": "Stili logo consentiti",
+    "stylesIconTitle": "Stili icone consentiti"
+  },
+  "logger": {
+    "component": {
+      "noMessages": "Nessun messaggio disponibile",
+      "issueDescription": "Descrizione completa del problema con ortografia leggibile."
+    }
+  },
+  "customVariables": {
+    "service": {
+      "error": {
+        "failedToDownload__i": "Impossibile scaricare il file delle variabili personalizzate. Stato: ${error}.",
+        "writingError": "Si è verificato un errore durante il salvataggio delle variabili personalizzate.",
+        "loadingError": "Errore durante il caricamento delle variabili personalizzate."
+      }
+    }
+  },
+  "configPresets": {
+    "service": {
+      "error": {
+        "writingError": "Errore durante il salvataggio dei preset di configurazione.",
+        "loadingError": "Errore durante il caricamento dei preset di configurazione."
+      }
+    }
+  },
+  "settings": {
+    "component": {
+      "text": {
+        "offlineMode": "Modalità offline",
+        "removeApps_btn": "Rimuovi",
+        "fuzzy_verbose": "Registra i risultati corrispondenti",
+        "enabledProviders": "Provider di immagini abilitati",
+        "selectLanguage": "Seleziona la lingua",
+        "selectTheme": "Seleziona il tema",
+        "resetFuzzy_btn": "Resetta",
+        "customVariables_desc": "Variabili personalizzate",
+        "configPresets_desc": "preset delle configurazioni",
+        "deleteDisabledShortcuts": "Rimuovi le scorciatoie per i parser disabilitati"
+      },
+      "placeholder": {
+        "noProviders": "Nessuno",
+        "userAccounts": "Per esempio ${steamlogin}"
+      }
+    },
+    "service": {
+      "info": {
+        "updatingSettings": "Aggiornamento delle impostazioni utente con nuovi campi."
+      },
+      "error": {
+        "writingError": "Si è verificato un errore durante il salvataggio delle impostazioni utente.",
+        "readingError": "Si è verificato un errore durante la lettura delle impostazioni utente."
+      }
+    }
+  },
+  "nav": {
+    "component": {
+      "about": "Info",
+      "view": "Visualizza Giochi",
+      "logger": "Registro",
+      "settings": "Impostazioni",
+      "parsers": "Crea Parser",
+      "customVariables": "Variabili",
+      "userExceptions": "Eccezioni",
+      "noTitle": "Nessun titolo!"
+    }
+  },
+  "userExceptions": {
+    "component": {
+      "buttons": {
+        "save": "Salva",
+        "undoChanges": "Annulla modifiche",
+        "deleteItem": "Rimuovi eccezione"
+      },
+      "text": {
+        "excludeArtwork": "Solo Artwork Locale"
+      }
+    },
+    "service": {
+      "error": {
+        "loadingError": "Impossibile caricare le eccezioni utente",
+        "writingError": "Errore durante il salvataggio delle eccezioni utente"
+      }
+    }
+  },
+  "parsers": {
+    "component": {
+      "buttons": {
+        "save": "Salva",
+        "delete": "Elimina",
+        "moveUp": "Sposta in alto",
+        "moveDown": "Sposta in basso",
+        "undoChanges": "Annulla modifiche",
+        "undoDelete": "Annulla l'eliminazione",
+        "toClipboard": "Copia la configurazione negli appunti"
+      },
+      "info": {
+        "testStarting__i": "Provando il parser \"${title}\" (versione SRM- ${version} ${portable}).",
+        "opSys__i": "Il sistema operativo è \"${os}\"",
+        "testCompleted": "Il test del parser è stato completato.",
+        "nothingWasFound": "Il parser non ha trovato nulla.",
+        "fetchingControllerTemplates": "Recupero template dei controller"
+      },
+      "error": {
+        "cannotParseUserIDs": "Errore nell'analisi degli account utente:",
+        "failedToMatch": "Corrispondenza fallita:",
+        "testFailed": "Test non riuscito",
+        "cannotTestInvalid": "Non è possibile provare una configurazione non valida!",
+        "cannotCopyInvalid": "Non è possibile copiare una configurazione non valida!",
+        "failedToCopy": "Copia negli appunti non riuscita!",
+        "cannotFetchTemplates": "Non è possibile recuperare i template dei controller per una directory di Steam non valida!",
+        "errorRemovingControllers": "Errore nella rimozione dei controller:",
+        "cannotRemoveControllers": "Impossibile rimuovere i controller da una cartella di Steam non valida!"
+      },
+      "success": {
+        "foundAccounts__i": "Trovati ${count} account utente disponibili:",
+        "extractedTitle__i": "[${index}/${total}]:      Titolo Estratto - ${title}",
+        "fuzzyTitle__i": "[${index}/${total}]:          Titolo fuzzy - ${title}",
+        "finalTitle__i": "[${index}/${total}]:          Titolo finale - ${title}",
+        "filePath__i": "[${index}/${total}]:            Percorso del file - ${filePath}",
+        "startDir__i": "[${index}/${total}]:            Cartella di partenza - ${startDir}",
+        "completeShortcut__i": "[${index}/${total}]:    Collegamento completo - ${shortcut}",
+        "defaultImage__i": "[${index}/${total}]: Fallback risolto ${artworkType}:\n[${index}/${total}]:                        ${image}",
+        "removedControllers__i": "Controller rimossi con successo per il parser: ${configTitle}",
+        "fetchedTemplates": "Recuperati tutti i template dei controller"
+      },
+      "label": {
+        "parserType": "Tipo di Parser",
+        "executableModifier": "Modificatore dell'eseguibile",
+        "executableLocation": "Eseguibile",
+        "romDirectory": "Cartella delle ROM",
+        "steamDirectory": "Cartella di Steam",
+        "startInDirectory": "Cartella \"Start In\"",
+        "userAccounts": "Profili Utente",
+        "titleFromVariable": "Titolo da variabile personalizzata",
+        "titleModifier": "Modificatore del Titolo",
+        "executableArgs": "Argomenti riga di comando",
+        "localImages__i": "Glob ${artworkType} locale"
+      },
+      "placeholder": {
+        "parserType": "Seleziona parser...",
+        "configTitle": "Il Mio Fantastico Parser",
+        "titleModifier": "${fuzzyTitle} o ${title}",
+        "imageProviders": "Nessuno",
+        "multiAPIPlaceholder": "Nessun filtro"
+      },
+      "text": {
+        "skipFileIfVariableWasNotFound": "Salta il file se la variabile non è stata trovata",
+        "caseInsensitiveVariables": "Variabili case-insensitive",
+        "shortcut_passthrough": "Segui .lnk o .desktop alla destinazione (solo Windows e Linux)",
+        "fuzzy_use": "Usa corrispondenza fuzzy",
+        "fuzzy_removeCharacters": "Corrispondenza aggressiva",
+        "fuzzy_removeBrackets": "Rimuovi le parentesi (...) e [...]",
+        "fuzzy_replaceDiacritic": "Sostituisci i caratteri diacritici",
+        "appendArgsToExecutable": "Aggiungi argomenti all'eseguibile",
+        "disabled": "Disabilita il parser corrente",
+        "advanced": "Mostra impostazioni avanzate",
+        "noTitle": "Nessun titolo!"
+      }
+    },
+    "service": {
+      "validationErrors": {
+        "parserType__md": "> Tipo di parser non corretto!",
+        "romDir__md": "> La cartella delle ROM non è valida!",
+        "steamDir__md": "> Cartella di Steam non valida!",
+        "executable__md": "> Eseguibile non valido!"
+      },
+      "text": {
+        "noTitle": "Nessun titolo!"
+      }
+    }
+  },
+  "fuzzyMatcher": {
+    "info": {
+      "successfulDownload": "Download riuscito. Salvataggio dell'elenco.",
+      "checkingIfListIsUpToDate": "Controllo se l'elenco dei titoli è aggiornato.",
+      "listIsOutdated": "La lista è obsoleta. Verrà scaricato l'elenco dei titoli per la corrispondenza fuzzy.",
+      "listIsUpToDate": "L'elenco dei titoli è aggiornato.",
+      "match__i": "Titolo fuzzy \"${fuzzyTitle}\" da \"${extractedTitle}\"",
+      "equal__i": "Comparazione Fuzzy: \"${a}\" == \"${b}\"",
+      "notEqual__i": "Comparazione Fuzzy: \"${a}\" != \"${b}\""
+    }
+  },
+  "fileParser": {
+    "error": {
+      "parserNotFound__i": "Parser \"${name}\" non trovato!",
+      "tooManyFieldGlobs__md": "> Solo un set `$(...)$` è consentito per input.",
+      "parserIsRequired__md": "> La prima parte di `$(...)$` deve contenere un **Glob** valido nel campo **Glob-regex**.",
+      "noWinSlashes__md": "> Il carattere `\\` della directory di Windows non è permesso! Usa `/` invece."
+    }
+  },
+  "imageProvider": {
+    "error": {
+      "webWorkerError__i": "Si è verificato un errore nel worker web. ${error}",
+      "unknownWebWorkerError": "Si è verificato un errore del web worker sconosciuto. Dati di errore: ${data}"
+    }
+  },
+  "vdfManager": {
+    "error": {
+      "noUsersFound": "Nessuna delle directory di Steam fornite conteneva alcuna directory utente.",
+      "emptyDirectoryList": "La lista delle cartelle è vuota.",
+      "couldNotPrepareToRead__i": "Impossibile trovare i file di Steam necessari:\n ${error}",
+      "couldNotBackupEntries__i": "Impossibile eseguire il backup dei file di Steam necessari:\n ${error}",
+      "couldNotReadEntries__i": "Impossibile leggere i file di Steam necessari:\n ${error}",
+      "couldNotWriteEntries": "Impossibile scrivere voci nei file di Steam:",
+      "couldNotMergeEntries__i": "Impossibile unire le voci:\n ${error}",
+      "couldNotRemoveEntries__i": "Impossibile rimuovere le voci:\n ${error}",
+      "nonFatal": "Si sono verificati errori non fatali durante la scrittura:"
+    }
+  },
+  "vdfFile": {
+    "error": {
+      "readingVdf__i": "Impossibile leggere da \"${filePath}\".\n ${error}",
+      "writingVdf__i": "Impossibile scrivere su \"${filePath}\".\n ${error}",
+      "corruptedVdf__i": "\"${filePath}\" è corrotto.\n ${error}",
+      "creatingBackup__i": "Impossibile creare il backup per \"${filePath}\".\n ${error}",
+      "unsupportedMimeType__i": "Il tipo Mime (${type}) non è supportato (titolo - \"${title}\")."
+    }
+  },
+  "helpers": {
+    "error": {
+      "noUserIdsInDir__i": "\"${steamDirectory}\" non contiene nessun ID utente."
+    }
+  }
+}

@@ -1,0 +1,9 @@
+<a class="add-games" routerLink="/preview" routerLinkActive="active" (click)="navClick.emit()">
+  <img src="/assets/images/preview.png" alt="" width="16" height="16" /> Add Games
+</a>
+<nav-parsers 
+    mwlDraggableScrollContainer
+    [navClick]="navClick"
+    >
+</nav-parsers>
+<nav [navClick]="navClick"></nav>

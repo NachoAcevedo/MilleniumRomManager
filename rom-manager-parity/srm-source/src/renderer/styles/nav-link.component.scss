@@ -1,0 +1,34 @@
+nav-link {
+  display: flex;
+  overflow: hidden;
+
+  cursor: default;
+  user-select: none;
+  align-items: center;
+  flex-shrink: 0;
+
+  > .content {
+    overflow: hidden;
+    width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: var(--padding-nav-link);
+    img {
+      vertical-align: middle;
+      margin-right: 14px;
+    }
+  }
+
+  &.titlelink {
+    > .content {
+      display: flex;
+    }
+  }
+  &.unsaved {
+    img {
+      // calculated using https://isotropic.co/tool/hex-color-to-css-filter/
+      // target was #fbfd81
+      filter: sepia(20%) saturate(7471%) hue-rotate(315deg) brightness(124%) contrast(98%);
+    }
+  }
+}

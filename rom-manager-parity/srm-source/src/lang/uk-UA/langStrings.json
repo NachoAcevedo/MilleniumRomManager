@@ -1,0 +1,36 @@
+{
+  "preview": {
+    "component": {
+      "filter": "Пошук для гри",
+      "selectType": "Тип ілюстрації",
+      "selectTypeOptions": {
+        "long": "Банери",
+        "tall": "Автори",
+        "hero": "Герої",
+        "icon": "Ікони",
+        "logo": "Логотипи",
+        "games": "Усі твори мистецтва"
+      },
+      "by": "за",
+      "saveAppList": "Зберегти у Steam",
+      "removeAppList": "Видалити з Steam",
+      "remainingImages": "Отримання url-адрес:",
+      "stopUrlRetrieving": "Зупинити",
+      "backButton": "Назад",
+      "logButton": "Журнал"
+    },
+    "service": {
+      "info": {
+        "listIsBeingGenerated": "Список формується. Будь ласка, зачекайте.",
+        "listIsBeingSaved": "Список зберігається. Будь ласка, зачекайте.",
+        "listIsBeingRemoved": "Список видаляється. Будь ласка, зачекайте.",
+        "listIsEmpty": "Список порожній.",
+        "populatingVDF_List": "Заповнення списку VDF.",
+        "creatingBackups": "Створення резервних копій.",
+        "readingVDF_Files": "Читання файлів VDF.",
+        "mergingVDF_entries": "Об’єднання записів VDF.",
+        "removingVDF_entries": "Видалення записів VDF і файлів зображень."
+      }
+    }
+  }
+}

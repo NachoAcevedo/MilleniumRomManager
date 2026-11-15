@@ -1,0 +1,7 @@
+{
+  "name": "rom-manager-launcher",
+  "common_name": "Steam ROM Manager en Steam",
+  "description": "Abre Steam ROM Manager desde Agregar un producto que no es de Steam.",
+  "version": "1.0.0",
+  "backendType": "lua"
+}

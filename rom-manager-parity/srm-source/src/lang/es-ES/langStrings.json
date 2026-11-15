@@ -1,0 +1,52 @@
+{
+  "preview": {
+    "component": {
+      "filter": "Buscar juego",
+      "selectType": "Tipo de imagen",
+      "selectTypeOptions": {
+        "tall": "Pósters",
+        "icon": "Iconos",
+        "games": "Todas las imágenes"
+      },
+      "by": "de",
+      "saveAppList": "Guardar en Steam",
+      "removeAppList": "Eliminar de Steam",
+      "remainingImages": "Obteniendo urls:",
+      "stopUrlRetrieving": "Detener",
+      "backButton": "Volver",
+      "logButton": "Registro"
+    },
+    "service": {
+      "info": {
+        "listIsBeingGenerated": "Se está generando la lista. Por favor, espere.",
+        "listIsBeingSaved": "Se está guardando la lista. Por favor, espere.",
+        "listIsBeingRemoved": "Se está eliminando la lista. Por favor, espere.",
+        "listIsEmpty": "La lista está vacía.",
+        "populatingVDF_List": "Rellenando lista de VDF.",
+        "creatingBackups": "Creando copia de seguridad.",
+        "readingVDF_Files": "Leyendo archivos VDF.",
+        "mergingVDF_entries": "Combinando entradas VDF.",
+        "removingVDF_entries": "Eliminando entradas VDF y archivos de imagen.",
+        "savingCategories": "Guardando información de categoría en localconfig.vdf.",
+        "savingControllers": "Guardando información de mandos.",
+        "removingFromCategories": "Eliminando toda la información de categoría añadida",
+        "updatingKnownSteamDirList": "Actualizando una lista de directorios conocidos de Steam.",
+        "executingParsers": "Ejecutando análisis.",
+        "parserFoundNoFiles": "El análisis no ha encontrado ningún archivo que coincida con la configuración del usuario.",
+        "noAccountsWarning": "Cuentas de usuario no encontradas. ¿Directorio de Steam incorrecto?"
+      }
+    }
+  },
+  "nav": {
+    "component": {
+      "parsers": "Crear Analizador"
+    }
+  },
+  "parsers": {
+    "component": {
+      "label": {
+        "parserType": "Tipo de analizador"
+      }
+    }
+  }
+}

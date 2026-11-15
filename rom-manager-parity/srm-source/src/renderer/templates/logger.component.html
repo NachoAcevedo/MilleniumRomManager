@@ -1,0 +1,214 @@
+<ng-container *ngIf="messages | async as currentMessages; else emptyWindow">
+  <ng-container *ngIf="currentMessages.length > 0; else emptyWindow">
+    <div class="messagesArea">
+      @if (findOpen) {
+        <div class="findBar">
+          <input
+            #findInput
+            type="text"
+            class="findInput"
+            [value]="findTerm"
+            [placeholder]="lang.find.placeholder"
+            (input)="onFind(findInput.value)"
+            (keydown.enter)="nextMatch()"
+            (keydown.shift.enter)="prevMatch()"
+            (keydown.escape)="closeFind()"
+          />
+          <span class="findCount"
+            >{{ matchCount ? activeMatch + 1 : 0 }}/{{ matchCount }}</span
+          >
+          <span
+            class="findBtn"
+            [title]="lang.find.previous"
+            (click)="prevMatch()"
+            >▲</span
+          >
+          <span class="findBtn" [title]="lang.find.next" (click)="nextMatch()"
+            >▼</span
+          >
+          <span
+            class="findBtn findClose"
+            [title]="lang.find.close"
+            (click)="closeFind()"
+            >✕</span
+          >
+        </div>
+      }
+      <div #messageWindow class="messages" [class.showReporter]="showReporter">
+        <ng-container *ngFor="let message of currentMessages">
+          <div
+            *ngIf="canShow(message.type)"
+            [ngClass]="message.type"
+            [class.wrap]="settings.textWrap"
+          >
+            <span
+              class="lineText"
+              [innerHTML]="
+                (message.text && message.text.length ? message.text : ' ')
+                  | highlight: (findOpen ? findTerm : '')
+              "
+            ></span>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+</ng-container>
+<ng-template #emptyWindow>
+  <div class="messages empty">
+    <span>{{ lang.noMessages }}</span>
+  </div>
+</ng-template>
+@if (showReporter) {
+  <div class="bugreport">
+    <div [formGroup]="bugForm">
+      <div class="inputContainer">
+        <div class="longtext">{{ lang.bugReport.describeIssue }}</div>
+        <div class="inlineLeft">
+          <ng-text-input
+            class="ngTextInput"
+            [multiline]="true"
+            [formControl]="bugForm.controls['description'] | formControl"
+            [placeholder]="lang.issueDescription"
+          ></ng-text-input>
+        </div>
+        <div class="inlineLeft">
+          <div class="text" style="margin-right: 0.25em">
+            {{ lang.bugReport.discordHandle }}
+          </div>
+          <ng-text-input
+            class="ngTextInput"
+            [formControl]="bugForm.controls['discordHandle'] | formControl"
+            [placeholder]="lang.handleExample"
+          ></ng-text-input>
+        </div>
+        <div class="inlineLeft">
+          <ng-toggle-button
+            class="ngToggleButton"
+            [formControl]="bugForm.controls['useVDFs'] | formControl"
+          >
+            {{ lang.bugReport.includeVDFs }}</ng-toggle-button
+          >
+        </div>
+        <div
+          class="inlineLeft"
+          [class.hidden]="!bugForm.controls['useVDFs'].value"
+        >
+          <div class="text" style="margin-right: 0.25em">
+            {{ lang.bugReport.steamDirectory }}
+          </div>
+          <ng-text-input
+            class="ngTextInput"
+            [formControl]="bugForm.controls['steamDirectory'] | formControl"
+            [placeholder]="lang.bugReport.steamDirectoryPlaceholder"
+          ></ng-text-input>
+        </div>
+        <div class="inlineLeft">
+          <div class="submit" (click)="submitReport()">
+            {{ lang.bugReport.submit }}
+          </div>
+        </div>
+        <div class="inlineLeft" [class.hidden]="this.reportID == undefined">
+          <div class="reportIDLabel" style="margin-right: 0.25em">
+            {{ lang.bugReport.reportId }}
+          </div>
+          <div class="reportID">{{ this.reportID }}</div>
+          <div class="copy" (click)="copyReportID()">
+            <svg copy-icon [title]="lang.bugReport.copyReportId"></svg>
+          </div>
+        </div>
+        <div class="inlineLeft" [class.hidden]="this.reportID == undefined">
+          <div class="reportIDLabel" style="margin-right: 0.25em">
+            {{ lang.bugReport.deleteKey }}
+          </div>
+          <div class="reportID">{{ this.deleteKey }}</div>
+          <div class="copy" (click)="copyDeleteKey()">
+            <svg copy-icon [title]="lang.bugReport.copyDeleteKey"></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <markdown class="bugreportdocs" [content]="this.explanation"></markdown>
+}
+@if (showOptions) {
+  <div class="options">
+    <div class="optionsGroup">
+      <div class="optionsLabel">
+        <span>{{ lang.logFilters }}</span>
+      </div>
+      <div
+        class="optionsButton"
+        [class.active]="settings.showErrors"
+        (click)="settings.showErrors = !settings.showErrors"
+      >
+        {{ lang.error }}
+      </div>
+      <div
+        class="optionsButton"
+        [class.active]="settings.showInfo"
+        (click)="settings.showInfo = !settings.showInfo"
+      >
+        {{ lang.info }}
+      </div>
+      <div
+        class="optionsButton"
+        [class.active]="settings.showSuccesses"
+        (click)="settings.showSuccesses = !settings.showSuccesses"
+      >
+        {{ lang.success }}
+      </div>
+      <div
+        class="optionsButton"
+        [class.active]="settings.showFuzzy"
+        (click)="settings.showFuzzy = !settings.showFuzzy"
+      >
+        {{ lang.fuzzy }}
+      </div>
+    </div>
+    <div class="optionsGroup">
+      <div class="optionsLabel">
+        <span>{{ lang.logSettings }}</span>
+      </div>
+      <div
+        class="optionsButton"
+        [class.active]="settings.textWrap"
+        (click)="settings.textWrap = !settings.textWrap"
+      >
+        {{ lang.textWrap }}
+      </div>
+      <div
+        class="optionsButton"
+        [class.active]="settings.autoscroll"
+        (click)="settings.autoscroll = !settings.autoscroll"
+      >
+        {{ lang.autoscroll }}
+      </div>
+    </div>
+  </div>
+}
+
+<div class="menu">
+  <div class="lowerLeft">
+    <div class="dangerousButton" (click)="clearLog()">{{ lang.clearLog }}</div>
+    <div (click)="toggleOptions()">{{ lang.options }}</div>
+  </div>
+  <div class="lowerRight">
+    @if (showReporter) {
+      <div class="dangerousButton" (click)="closeReporter()">
+        {{ lang.closeReporter }}
+      </div>
+    } @else {
+      <div (click)="openReporter()">{{ lang.reportBug }}</div>
+    }
+    @if (appSettings.theme == "EmuDeck") {
+      <div
+        routerLink="/parsers-list"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        {{ lang.back }}
+      </div>
+    }
+  </div>
+</div>

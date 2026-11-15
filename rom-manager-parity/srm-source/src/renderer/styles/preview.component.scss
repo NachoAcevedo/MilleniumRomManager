@@ -1,0 +1,1074 @@
+@import "mixins";
+//$image-height-max: 430px;
+//$image-width-max: 920px;
+
+:host {
+  display: grid;
+  overflow-y: auto;
+  overflow: hidden;
+  background-color: var(--color-preview-background);
+  --preview-image-size: 0.4;
+  --image-width-max: 1196px;
+  --image-height-max: 559px;
+  --games-long-width: 1196px;
+  --games-long-height: 559px;
+  --games-tall-width: 600px;
+  --games-tall-height: 900px;
+  --games-hero-width: 1920px;
+  --games-hero-height: 620px;
+  --games-logo-width: 960px;
+  --games-logo-height: 540px;
+  --games-icon-width: 600px;
+  --games-icon-height: 600px;
+  --details-width: 0%;
+  --list-images-width: 0%;
+  --list-images-factor: 0.7;
+  --excludes-lower-width: 0%;
+  --filters-width: 0%;
+  grid-area: route;
+  grid-template-areas:
+    "upperMenu upperMenu upperMenu upperMenu upperMenu"
+    "excludes excludes excludes excludes excludes"
+    "detailsUpper detailsUpper detailsUpper detailsUpper detailsUpper"
+    "listImagesUpper listImagesUpper listImagesUpper listImagesUpper listImagesUpper"
+    "urls urls urls urls urls"
+    "filters entries detailsLower listImages excludesLower"
+    "lowerMenu lowerMenu lowerMenu lowerMenu lowerMenu";
+  grid-template-rows: auto auto auto auto auto 1fr auto;
+  grid-template-columns:
+    var(--filters-width) auto var(--details-width) var(--list-images-width)
+    var(--excludes-lower-width);
+  .loadingSpinner {
+    &:before {
+      display: block;
+      justify-content: center;
+      width: 5em;
+      height: 5em;
+      margin-top: 40vh;
+      content: "";
+      animation: loadingSpinner 0.6s linear infinite;
+
+      border-top: 0.325em solid transparent;
+      border-top-color: var(--color-app-loading-spinner);
+      border-right: 0.325em solid transparent;
+      border-radius: 50%;
+    }
+  }
+  @keyframes loadingSpinner {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .preview-description {
+    height: 100%;
+    grid-area: entries;
+    z-index: 3;
+    width: 100%;
+    max-width: 94vw;
+    margin: 0 auto;
+    padding: 30px;
+    box-sizing: border-box;
+    color: var(--color-markdown-h1);
+    + div + div {
+      background: transparent;
+    }
+    .fake-btn {
+      @include button();
+      @include clickButtonColor(click-button);
+      color: var(--color-click-button-text-hover);
+      background-color: var(--color-click-button-background-hover);
+    }
+    strong {
+      color: var(--color-markdown-h1);
+    }
+    h1 {
+      line-height: 1.25;
+      margin: var(--margin-markdown-hx);
+      padding-bottom: 0.3em;
+      border-bottom: 1px solid var(--color-markdown-underline);
+      font-size: var(--font-markdown-h1);
+      font-family: var(--font-family-markdown-h1);
+      color: var(--color-markdown-h1);
+      margin-top: 0;
+    }
+    p {
+      margin: 0 0 1rem 0;
+      color: var(--color-markdown-text);
+    }
+    ol {
+      li {
+        margin-bottom: 12px;
+      }
+    }
+  }
+
+  .upperMenu {
+    display: grid;
+    border: 0.5em solid transparent;
+    background-color: var(--color-preview-menu-background);
+
+    align-items: center;
+    grid-area: upperMenu;
+    grid-template-columns: auto auto 1fr auto auto;
+    grid-template-rows: auto;
+
+    ng-select,
+    ng-text-input {
+      margin-bottom: 0;
+    }
+    .filtersButton {
+      grid-column: 1;
+      @include button();
+      @include clickButtonColor(click-button);
+    }
+    .title {
+      margin-left: 1em;
+      color: var(--color-preview-text);
+    }
+    .imageCounter {
+      color: var(--color-preview-text);
+
+      grid-column: 2;
+    }
+    .selectType {
+      grid-column: 3;
+      width: var(--width-preview-select-type);
+      font-size: 1em;
+      margin-right: 0.75em;
+      color: var(--color-preview-text);
+    }
+
+    .slider {
+      display: flex;
+      align-items: center;
+      grid-column: 4;
+      > div,
+      > input {
+        margin: 0 0.25em;
+      }
+      > div {
+        width: 3.5em;
+
+        color: var(--color-preview-text);
+      }
+      > input {
+        @include webkitSlider(preview-app-zoom-slider);
+      }
+    }
+    .appFilter {
+      @include ngTextInputColor(input);
+      @include ngTextInput();
+      margin-bottom: 0;
+      width: 13em;
+      grid-column: 5;
+    }
+  }
+
+  .lowerMenu {
+    display: grid;
+    overflow-y: auto;
+    border: 0.5em solid transparent;
+    background-color: var(--color-preview-menu-background);
+    align-items: center;
+    grid-area: lowerMenu;
+    grid-template-areas: "lowerLeft . lowerRight";
+    grid-template-columns: auto 1fr auto;
+    .lowerLeft {
+      grid-area: lowerLeft;
+    }
+    .lowerRight {
+      grid-area: lowerRight;
+    }
+    .button {
+      @include button();
+      @include clickButtonColor(click-button);
+      margin: 0 0.25em;
+      &:last-child {
+        margin-right: 0;
+      }
+      &:first-child {
+        margin-left: 0;
+      }
+      &.dangerousButton {
+        @include clickButtonColor(dangerous-click-button, true);
+      }
+    }
+  }
+  .excludes {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-preview-menu-background);
+    padding: 0.2em 0.8em 0.4em;
+    grid-area: excludes;
+    > .titleGroup {
+      color: var(--color-preview-text);
+    }
+    > .buttonGroup {
+      display: flex;
+      justify-content: right;
+      margin-right: 0.5em;
+      > .excludeButton {
+        @include button();
+        @include clickButtonColor(click-button);
+        margin-right: 1em;
+        &.dangerousButton {
+          @include clickButtonColor(dangerous-click-button, true);
+        }
+      }
+    }
+  }
+  .upper {
+    &.detailsUpper {
+      grid-area: detailsUpper;
+    }
+    &.listImagesUpper {
+      grid-area: listImagesUpper;
+    }
+    display: flex;
+    padding: 0.2em 0.8em 0.4em;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-preview-menu-background);
+    > .upperTitle {
+      color: var(--color-preview-text);
+    }
+    > .buttonGroup {
+      display: flex;
+      justify-content: right;
+      > .upperButton {
+        @include button();
+        @include clickButtonColor(click-button);
+        margin-left: 1em;
+        &.dangerousButton {
+          @include clickButtonColor(dangerous-click-button, true);
+        }
+      }
+    }
+  }
+
+  .listImages {
+    @include webkitScrollbar(preview-scrollbar);
+    grid-area: listImages;
+    overflow-y: scroll;
+    background-color: var(--color-nested-form-background);
+    color: var(--color-settings-text);
+    .listImagesTypeSelect {
+      width: 95%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      .listImagesButton {
+        @include button();
+        @include clickButtonColor(click-button);
+        padding-left: 1em;
+        padding-right: 1em;
+        &.selected {
+          color: var(--color-click-button-text-hover);
+          background-color: var(--color-click-button-background-hover);
+        }
+      }
+    }
+    .imagesSection {
+      padding: 1em;
+      .imagesSectionLabel {
+        width: 100%;
+        border-bottom: solid 2px var(--color-nested-form-label);
+      }
+      .imagesSectionList {
+        width: 100%;
+        display: flex;
+        justify-content: left;
+        align-items: center;
+        flex-wrap: wrap;
+        > .app {
+          flex-shrink: 0;
+          margin: 0.75em;
+          width: calc(
+            var(--preview-image-size) * var(--games-tall-width) *
+              var(--list-images-factor)
+          );
+          height: calc(
+            var(--preview-image-size) * var(--games-tall-height) *
+              var(--list-images-factor)
+          );
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: 100%;
+          &.longStyle {
+            width: calc(
+              var(--preview-image-size) * var(--games-long-width) *
+                var(--list-images-factor)
+            );
+            height: calc(
+              var(--preview-image-size) * var(--games-long-height) *
+                var(--list-images-factor)
+            );
+          }
+          &.tallStyle {
+            width: calc(
+              var(--preview-image-size) * var(--games-tall-width) *
+                var(--list-images-factor)
+            );
+            height: calc(
+              var(--preview-image-size) * var(--games-tall-height) *
+                var(--list-images-factor)
+            );
+          }
+          &.heroStyle {
+            width: calc(
+              var(--preview-image-size) * var(--games-hero-width) *
+                var(--list-images-factor)
+            );
+            height: calc(
+              var(--preview-image-size) * var(--games-hero-height) *
+                var(--list-images-factor)
+            );
+          }
+          &.logoStyle {
+            width: calc(
+              var(--preview-image-size) * var(--games-logo-width) *
+                var(--list-images-factor)
+            );
+            height: calc(
+              var(--preview-image-size) * var(--games-logo-height) *
+                var(--list-images-factor)
+            );
+          }
+          &.iconStyle {
+            width: calc(
+              var(--preview-image-size) * var(--games-icon-width) *
+                var(--list-images-factor)
+            );
+            height: calc(
+              var(--preview-image-size) * var(--games-icon-height) *
+                var(--list-images-factor)
+            );
+          }
+          border: solid 2px transparent; // fixes flickering
+          &.selected,
+          &:hover {
+            border: solid 2px #099;
+          }
+        }
+      }
+    }
+  }
+  .excludesLower {
+    @include webkitScrollbar(preview-scrollbar);
+    overflow-y: auto;
+    grid-area: excludesLower;
+    .title {
+      padding: 9px;
+      background-color: var(--color-preview-user-background);
+      color: var(--color-preview-text);
+      border-bottom: solid 1px var(--color-preview-user-background);
+      .button {
+        @include button();
+        @include clickButtonColor(click-button);
+        margin-left: 1em;
+      }
+    }
+    .currentExclude {
+      padding: 1em;
+      color: var(--color-preview-text);
+      border-top: solid 1px var(--color-preview-user-background);
+      border-bottom: solid 1px var(--color-preview-user-background);
+      &.isPutBack {
+        background-color: var(--color-ng-select-option-background-hover);
+        color: var(--color-ng-select-option-text-hover);
+      }
+    }
+  }
+  .detailsLower {
+    @include webkitScrollbar(preview-scrollbar);
+    grid-area: detailsLower;
+    display: grid;
+    grid-template-areas:
+      "detailsOptions"
+      "detailsList";
+    grid-template-rows: auto 1fr;
+    overflow-y: auto;
+    & > .loadingSpinner {
+      margin-left: calc(var(--details-width) - 3em);
+    }
+
+    .detailsOptions {
+      // Stays at the top while the results scroll underneath; as tall as
+      // its fields (a fixed height let new fields hang off its background).
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      &.perAppHidden {
+        .detailsExceptionSection {
+          svg {
+            transform: rotate(-90deg);
+          }
+        }
+      }
+      background-color: var(--color-details-options-background);
+      opacity: 1;
+      padding: 1em 1em 0.5em 1em;
+      grid-area: detailsOptions;
+      .ngTextInput {
+        @include ngTextInputColor(input);
+        @include ngTextInput();
+        width: 100%;
+      }
+      ng-toggle-button {
+        font-size: 1em;
+        margin: 0.25em 0 0.25em 0;
+        @include ngToggleButtonColor(ng-toggle-button);
+        color: var(--color-preview-text);
+      }
+      .detailsExceptionSection {
+        width: 100%;
+        font-size: 1em;
+        color: var(--color-preview-text);
+        margin-bottom: 1em;
+        border-bottom: solid 2px var(--color-nested-form-label);
+        svg {
+          --color-select-arrow-down: var(--color-preview-text);
+          --select-arrow-down-width: 30;
+        }
+        span {
+          margin-left: 0.25em;
+        }
+      }
+      .detailsException {
+        width: 100%;
+        display: grid;
+        grid-row: auto;
+        .detailsExceptionField {
+          width: 100%;
+          margin-bottom: 1em;
+          display: grid;
+          grid-template-areas: "detailsExceptionText detailsExceptionButton";
+          grid-template-columns: 1fr auto;
+          .detailsExceptionText {
+            display: flex;
+            grid-area: detailsExceptionText;
+            width: 100%;
+            .ngTextInput {
+              margin: 0em;
+            }
+          }
+          .detailsExceptionButton {
+            grid-area: detailsExceptionButton;
+            @include button();
+            @include clickButtonColor(click-button);
+            margin-left: 0.25em;
+          }
+        }
+      }
+      .detailsSearch {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .clickButton2 {
+          @include button();
+          @include clickButtonColor(click-button);
+          margin: 0 0 0 0.25em;
+          margin-bottom: var(--margin-input-text);
+        }
+      }
+    }
+    .appResults {
+      margin-top: 1em;
+      grid-area: detailsList;
+      > .approw {
+        display: flex;
+        justify-content: left;
+        align-items: center;
+        background-color: var(--color-preview-user-background);
+        color: var(--color-preview-text);
+        margin-bottom: 0em;
+        &:hover,
+        &.selected {
+          background-color: var(--color-ng-select-option-background-hover);
+          color: var(--color-ng-select-option-text-hover);
+        }
+        .app {
+          flex-shrink: 0;
+          border: solid 2px var(--color-preview-image-border);
+          margin: 0.75em;
+          width: calc(
+            0.6 * var(--preview-image-size) * var(--games-tall-width)
+          );
+          height: calc(
+            0.6 * var(--preview-image-size) * var(--games-tall-height)
+          );
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: 100%;
+        }
+        .apptitle {
+          margin-left: 5em;
+        }
+      }
+      .appButtons {
+        margin-top: 0.5em;
+        margin-bottom: 2em;
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+        .button {
+          @include button();
+          @include clickButtonColor(click-button);
+          margin-right: 1em;
+        }
+      }
+    }
+  }
+
+  .urls {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    background: var(--color-preview-menu-background);
+    padding: 0.2em 0.8em 0.4em;
+    color: var(--color-preview-text);
+    > .stopButton {
+      @include button();
+      @include clickButtonColor(click-button);
+      margin-right: 1em;
+    }
+    grid-area: urls;
+  }
+
+  .filters {
+    grid-area: filters;
+    background-color: var(--color-preview-user-background);
+    @include webkitScrollbar(preview-scrollbar);
+    overflow-y: scroll;
+
+    .filtergroup {
+      padding-left: 1em;
+      padding-right: 1em;
+      padding-top: 1em;
+      ng-toggle-button {
+        font-size: 1em;
+        margin: 0.25em 0 0.25em 0;
+        @include ngToggleButtonColor(ng-toggle-button);
+        color: var(--color-preview-text);
+      }
+      .filterLabel {
+        margin-bottom: 0.5em;
+        span {
+          color: var(--color-preview-text);
+        }
+      }
+
+      .select {
+        width: 100%;
+        font-size: 1em;
+        color: var(--color-preview-text);
+      }
+      .button {
+        @include button();
+        @include clickButtonColor(click-button);
+        margin-bottom: 1em;
+        margin-right: 1em;
+        // The panel is the buttons' own surface: step them up and outline
+        // them so they read as buttons.
+        &:not(:hover):not(:active) {
+          background-color: var(--srm-surface-hover);
+          border-color: var(--srm-border-strong);
+        }
+      }
+    }
+  }
+
+  .entries {
+    @include webkitScrollbar(preview-scrollbar);
+    overflow-y: auto;
+    &.detailsOpen,
+    &.listImagesOpen,
+    &.showExcludes {
+      ::-webkit-scrollbar {
+        width: 0.75em;
+      }
+      overflow-y: scroll;
+    }
+
+    grid-area: entries;
+
+    > .directory {
+      > .title {
+        display: var(--display-preview-title);
+        padding: 0.5em 0.25em;
+        border-top: 1px solid var(--color-preview-separator);
+        border-bottom: 1px solid var(--color-preview-separator);
+        background-color: var(--color-preview-directory-background);
+        svg {
+          --color-select-arrow-down: var(--color-preview-text);
+          --select-arrow-down-width: 30;
+        }
+        span {
+          margin-left: 0.25em;
+
+          color: var(--color-preview-text);
+        }
+      }
+      > .user {
+        > .title {
+          padding: var(--padding-preview-separator);
+
+          border-bottom: 1px solid var(--color-preview-separator);
+          background-color: var(--color-preview-user-background);
+
+          align-items: center;
+
+          svg {
+            --color-select-arrow-down: var(--color-preview-text);
+            --select-arrow-down-width: 30;
+          }
+          span {
+            margin-left: 0.25em;
+            color: var(--color-preview-text);
+          }
+        }
+        > .apps {
+          margin: 0.75em;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          align-content: space-around;
+          justify-content: left;
+          margin-left: 1vw;
+          > .listItem {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-auto-rows: 50px;
+            width: 100%;
+            height: 100%;
+            color: var(--color-preview-text);
+            border-top: solid 1px var(--color-preview-user-background);
+            border-bottom: solid 1px var(--color-preview-user-background);
+            &:first-child {
+              border-top: solid 2px var(--color-preview-user-background);
+            }
+            &:last-child {
+              border-bottom: solid 2px var(--color-preview-user-background);
+            }
+            &.showExcludes {
+              background-color: var(--color-ng-select-option-background-hover);
+              color: var(--color-ng-select-option-text-hover);
+            }
+            &.showExcludes.isExcluded {
+              opacity: 0.3;
+            }
+            > .infoField {
+              height: 50px;
+              display: flex;
+              align-items: center;
+              padding-left: 1em;
+              border-left: solid 1px var(--color-preview-user-background);
+              border-right: solid 1px var(--color-preview-user-background);
+              &:first-child {
+                border-left: solid 2px var(--color-preview-user-background);
+              }
+              &:last-child {
+                border-right: solid 2px var(--color-preview-user-background);
+              }
+              span {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+              ng-toggle-button {
+                @include ngToggleButtonColor(ng-toggle-button);
+                font-size: 1em;
+                margin: 0.25em 0 0.25em 0;
+              }
+            }
+            &.header > .infoField {
+              &:hover,
+              &.sortBy {
+                background-color: var(
+                  --color-ng-select-option-background-hover
+                );
+                color: var(--color-ng-select-option-text-hover);
+              }
+            }
+            &:hover:not(.header),
+            &.current {
+              background-color: var(--color-ng-select-option-background-hover);
+              color: var(--color-ng-select-option-text-hover);
+            }
+          }
+          > .title {
+            padding: 0.5em 0.25em;
+            flex-basis: 100%;
+            border: 1px solid;
+            border-color: var(--color-preview-separator);
+            background-color: var(--color-preview-user-background);
+            span {
+              margin-left: 0.25em;
+              color: var(--color-preview-text);
+            }
+          }
+
+          > .app {
+            flex-shrink: 0;
+            border: solid 2px var(--color-preview-image-border);
+            margin: 0.75em;
+            width: calc(var(--preview-image-size) * var(--image-width-max));
+            height: calc(var(--preview-image-size) * var(--image-height-max));
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: auto 75%;
+            &.showExcludes:not(.isExcluded) {
+              border: solid 3px;
+              border-color: #099 !important;
+            }
+            &.showExcludes.isExcluded {
+              opacity: 0.3;
+            }
+            &.longStyle {
+              width: calc(var(--preview-image-size) * var(--games-long-width));
+              height: calc(
+                var(--preview-image-size) * var(--games-long-height)
+              );
+            }
+            &.tallStyle {
+              width: calc(var(--preview-image-size) * var(--games-tall-width));
+              height: calc(
+                var(--preview-image-size) * var(--games-tall-height)
+              );
+            }
+            &.heroStyle {
+              width: calc(var(--preview-image-size) * var(--games-hero-width));
+              height: calc(
+                var(--preview-image-size) * var(--games-hero-height)
+              );
+            }
+            &.logoStyle {
+              width: calc(var(--preview-image-size) * var(--games-logo-width));
+              height: calc(
+                var(--preview-image-size) * var(--games-logo-height)
+              );
+            }
+            &.iconStyle {
+              width: calc(var(--preview-image-size) * var(--games-icon-width));
+              height: calc(
+                var(--preview-image-size) * var(--games-icon-height)
+              );
+            }
+            &.retrieving {
+              background-color: var(
+                --color-preview-image-retrieving-url-background
+              );
+              border-color: var(--color-preview-image-retrieving-url-border);
+            }
+
+            &.noImages {
+              background-color: var(--color-preview-image-not-found-background);
+              border-color: var(--color-preview-image-not-found-border);
+            }
+
+            &.downloading {
+              background-color: var(
+                --color-preview-image-downloading-background
+              );
+              border-color: var(--color-preview-image-downloading-border);
+            }
+
+            &.failed {
+              background-color: var(--color-preview-image-failed-background);
+              border-color: var(--color-preview-image-failed-border);
+            }
+
+            &.imageLoaded {
+              background-size: contain;
+            }
+
+            > .appOverlay {
+              --row-height: calc(var(--preview-image-size) * 150px);
+
+              height: 100%;
+              display: grid;
+
+              grid-template-areas:
+                "appInfo appInfo"
+                "imageSelector imageSelector"
+                "bottomPanel bottomPanel";
+
+              grid-template-rows: var(--row-height) 1fr var(--row-height);
+
+              grid-template-columns: auto 1fr;
+
+              background-color: var(--color-preview-app-hover-background);
+
+              > .icon {
+                grid-area: icon;
+
+                width: var(--row-height);
+                height: var(--row-height);
+              }
+
+              > .appInfo {
+                display: grid;
+                grid-area: appInfo;
+
+                grid-template-areas:
+                  "title title"
+                  "provider imageIndex";
+
+                grid-template-rows: 1fr auto;
+                grid-template-columns: 1fr auto;
+
+                > .title {
+                  display: grid;
+                  align-items: center;
+                  grid-area: title;
+                  overflow: hidden;
+
+                  padding: 0.1em;
+
+                  white-space: nowrap;
+                  text-overflow: ellipsis;
+
+                  font-size: calc(var(--preview-image-size) * 3em);
+
+                  color: var(--color-preview-text);
+                }
+
+                > .provider {
+                  grid-area: provider;
+                  overflow: hidden;
+
+                  padding: 0.1em;
+
+                  white-space: nowrap;
+                  text-overflow: ellipsis;
+
+                  font-size: calc(var(--preview-image-size) * 2em);
+
+                  color: var(--color-preview-text);
+                }
+
+                > .imageIndex {
+                  grid-area: imageIndex;
+
+                  padding: 0.1em;
+
+                  font-size: calc(var(--preview-image-size) * 2em);
+
+                  color: var(--color-preview-text);
+                }
+              }
+
+              > .imageSelector {
+                display: grid;
+                grid-area: imageSelector;
+
+                grid-template-areas: "previous . next";
+
+                grid-template-columns: auto 1fr auto;
+
+                > .previous,
+                > .next {
+                  width: var(--row-height);
+                  height: 100%;
+                }
+
+                > .previous {
+                  grid-area: previous;
+                }
+
+                > .next {
+                  grid-area: next;
+                }
+              }
+
+              > .bottomPanel {
+                display: grid;
+                grid-area: bottomPanel;
+                grid-template-areas:
+                  "title"
+                  "buttons";
+                grid-gap: 2px;
+                grid-auto-flow: row;
+                grid-auto-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+
+                > .configTitle {
+                  grid-area: title;
+                  text-align: right;
+                  padding: 0.1em;
+                  overflow: hidden;
+                  white-space: nowrap;
+                  text-overflow: ellipsis;
+                  font-size: calc(var(--preview-image-size) * 2em);
+
+                  color: var(--color-preview-text);
+                }
+
+                > .appButtons {
+                  grid-area: buttons;
+
+                  --color-refresh-images: var(--color-preview-app-button);
+                  --color-image-alert: var(--color-preview-app-button);
+
+                  --color-refresh-images-hover: var(
+                    --color-preview-app-button-hover
+                  );
+                  --color-image-alert-hover: var(
+                    --color-preview-app-button-hover
+                  );
+
+                  --color-refresh-images-active: var(
+                    --color-preview-app-button-active
+                  );
+                  --color-image-alert-active: var(
+                    --color-preview-app-button-active
+                  );
+                  .deckbuttons {
+                    display: flex;
+                    width: 100%;
+                    align-items: flex-end;
+                    flex-direction: row;
+                    flex-wrap: nowrap;
+                    justify-content: stretch;
+                  }
+                  > .button {
+                    height: calc(var(--row-height) * 0.5);
+                    padding: 0.2em;
+                  }
+
+                  > .separator {
+                    flex: 1 1 auto;
+                  }
+                  .classic-buttons {
+                    display: flex;
+                    width: 100%;
+                    align-items: flex-end;
+                    flex-direction: row;
+                    flex-wrap: nowrap;
+                    justify-content: space-around;
+                    .separator {
+                      flex-basis: 50%;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        &.hidden {
+          //align-self: start;
+          //grid-auto-rows: auto auto;
+
+          > .title {
+            svg {
+              transform: rotate(-90deg);
+            }
+          }
+          > .apps {
+            display: none;
+          }
+        }
+      }
+
+      &.hidden {
+        //grid-auto-rows: auto auto;
+
+        > .title {
+          svg {
+            transform: rotate(-90deg);
+          }
+        }
+        > .user {
+          display: none;
+        }
+      }
+    }
+  }
+}
+.importer-switch { padding: 12px 20px 0; }
+.importer-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 16px 20px; overflow: auto; }
+.importer-results header, .importer-results footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.importer-results h1 { margin: 0 0 10px; }
+.importer-layout input { accent-color: var(--srm-accent); }
+.importer-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 14px; margin: 18px 0; }
+.importer-card { display: flex; flex-direction: column; gap: 5px; position: relative; padding: 8px; border: 1px solid var(--srm-border-strong); border-radius: 10px; background: var(--srm-surface); cursor: pointer; }
+.importer-card.selected { border-color: var(--srm-accent); box-shadow: 0 0 0 1px var(--srm-accent); }
+.importer-card > input { position: absolute; right: -7px; top: -7px; width: 19px; height: 19px; margin: 0; }
+.importer-card small { color: var(--srm-text-muted); }
+.importer-cover { aspect-ratio: 2/3; display: grid; place-items: center; overflow: hidden; border-radius: 6px; background: var(--srm-surface-sunken); color: var(--srm-text-muted); }
+.importer-cover img { width: 100%; height: 100%; object-fit: cover; }
+.importer-primary { background: var(--srm-accent); color: var(--srm-text-on-accent); font-weight: 650; }
+.importer-restart { width: min(460px, 85vw); box-sizing: border-box; padding: 22px; color: inherit; background: var(--srm-surface-raised); border: 1px solid var(--srm-border-strong); border-radius: 14px; }
+.importer-restart::backdrop { background: var(--srm-scrim); }
+.importer-restart button + button { margin-left: 10px; }
+:host(.importer-mode) {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: #151b25;
+  color: #e8edf6;
+  font: 14px/1.45 Inter, "Segoe UI", sans-serif;
+}
+
+:host(.importer-mode) .importer-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 22px;
+  gap: 12px;
+  background: #1b2330;
+  border-bottom: 1px solid #354052;
+}
+
+.importer-switch h1 { margin: 0; font-size: 22px; letter-spacing: -.025em; }
+:host(.importer-mode) .importer-layout { flex: 1; min-height: 0; gap: 0; padding: 0; grid-template-columns: minmax(0, 1fr); overflow: hidden; }
+.importer-results { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 17px 20px 0; overflow: hidden; }
+.importer-results h2, .importer-parsers h2 { font-size: 17px; margin: 0; }
+.importer-toggle { color: #b9c7da; margin-top: 12px; }
+.importer-toggle input { margin-right: 5px; }
+.importer-cards { align-content: start; flex: 1; min-height: 0; overflow: auto; padding: 9px; margin: 7px -8px 0; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.importer-card { background: #202a39; border-color: #354052; }
+.importer-card.selected { background: #24364b; }
+.importer-card > input { z-index: 1; }
+.importer-card strong { font-size: 13px; overflow-wrap: anywhere; }
+.importer-cover { background: linear-gradient(145deg,#30445d,#172334); }
+.importer-results footer { flex: none; margin: 0 -20px; padding: 12px 20px; min-height: 38px; border-top: 1px solid #354052; background: #1b2330; }
+.importer-results footer p { margin: 0; color: #b9c7da; }
+.importer-switch button, .importer-layout button, .importer-restart button {
+  border: 1px solid #42516a;
+  border-radius: 8px;
+  padding: 7px 12px;
+  background: #2c394d;
+  color: #e8edf6;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.importer-layout button.importer-primary, .importer-restart button.importer-primary { background: #94ccff; border-color: #94ccff; color: #101e2e; }
+.importer-layout button:disabled, .importer-switch button:disabled, .importer-restart button:disabled { opacity: .55; cursor: default; }
+
+.importer-placeholder { background: #26364a; }
+.importer-empty { grid-column: 1 / -1; color: var(--srm-text-muted); margin: 12px 0; }
+.importer-switch button:focus-visible, .importer-layout button:focus-visible,
+.importer-restart button:focus-visible, .importer-card:has(input:focus-visible) {
+  outline: 2px solid var(--srm-accent);
+  outline-offset: 3px;
+}
+.importer-results footer small { color: var(--srm-text-muted); }
+
+.importer-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.importer-filters input, .importer-filters select { color: inherit; background: #202a39; border: 1px solid #42516a; border-radius: 6px; padding: 6px 9px; }
+.importer-filters input { flex: 1 1 150px; min-width: 0; }
+.importer-cover .cover-loading { opacity: 0; }
+.importer-default-cover { width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: end; gap: 5px; padding: 12px; color: #e8edf6; background: linear-gradient(150deg, #263b52 25%, #192638 60%, #101b2c); }
+.importer-default-cover strong { font-size: clamp(12px, 1.5vw, 18px); }
+.importer-default-cover img { width: 34px; height: 34px; object-fit: contain; margin-bottom: auto; }

@@ -1,0 +1,20 @@
+<div class="chooseAccounts">
+  <div class="chooseAccountsContent">
+    <p>{{ lang.title }}</p>
+    <p>{{ steamDir }}</p>
+    <!-- <img src="/assets/images/preview.png"/> -->
+    <div class="accounts">
+      <div
+        class="account"
+        *ngFor="let account of availableAccounts"
+        (click)="selectAccount(account)"
+        [class.selected]="!!selectedAccounts[account.accountID]"
+      >
+        <img src="{{ getAccountImage(account) }}" [alt]="lang.iconAlt" />
+        <div class="info">{{ account.name }} ({{ account.accountID }})</div>
+      </div>
+    </div>
+    <div class="noButton" (click)="cancelAccounts()">{{ lang.cancel }}</div>
+    <div class="goButton" (click)="saveAccounts()">{{ lang.save }}</div>
+  </div>
+</div>

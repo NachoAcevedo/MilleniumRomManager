@@ -1,0 +1,93 @@
+{
+  "preview": {
+    "component": {
+      "filter": "Поиск игры",
+      "selectType": "Тип иллюстрации",
+      "selectCategories": "Категории",
+      "selectTypeOptions": {
+        "long": "Баннеры",
+        "tall": "Постеры",
+        "hero": "Герои",
+        "icon": "Иконки",
+        "logo": "Логотипы",
+        "games": "Все работы"
+      },
+      "by": "от",
+      "generateAppList": "Обновить",
+      "saveAppList": "Сохранить в Steam",
+      "removeAppList": "Удалить из Steam",
+      "remainingImages": "Получение URL-адресов:",
+      "stopUrlRetrieving": "Стоп",
+      "exportSelections": "Экспорт иллюстрации",
+      "importSelections": "Импорт иллюстрации",
+      "backButton": "Назад",
+      "logButton": "Лог"
+    },
+    "service": {
+      "info": {
+        "listIsBeingGenerated": "Список формируется. Пожалуйста, подождите.",
+        "listIsBeingSaved": "Список сохраняется. Пожалуйста, подождите.",
+        "listIsBeingRemoved": "Список удаляется. Пожалуйста, подождите.",
+        "listIsEmpty": "Список пуст.",
+        "populatingVDF_List": "Заполняем список VDF.",
+        "creatingBackups": "Создание резервных копий.",
+        "readingVDF_Files": "Чтение файлов VDF.",
+        "mergingVDF_entries": "Объединение записей VDF.",
+        "removingVDF_entries": "Удаление записей VDF и файлов изображений.",
+        "savingCategories": "Сохранение информации о категории в файле localconfig.vdf.",
+        "savingControllers": "Сохранение информации о контроллере.",
+        "removingFromCategories": "Удаление всей добавленной информации о категориях",
+        "updatingKnownSteamDirList": "Обновлен список известных каталогов Steam.",
+        "executingParsers": "Выполнение парсеров.",
+        "shutdownSteam": "Если Steam запущен, выйдите из него.",
+        "noParserConfigurations": "Сначала создайте конфигурацию парсера в меню \"Парсеры\".",
+        "parserFoundNoFiles": "Парсер(ы) не нашел файлов, соответствующих пользовательской конфигурации.",
+        "providerTimeout__i": "Тайм-аут был запрошен \"${provider}\" на ${time} секунду(ы).",
+        "noAccountsWarning": "Учетные записи пользователей не найдены. Возможно указана неправильная директория Steam?"
+      },
+      "errors": {
+        "fatalError": "При добавлении игр произошла фатальная ошибка. Подробности см. в журнале событий.",
+        "fatalError__i": "Фатальная ошибка при добавлении игр: ${error}"
+      }
+    }
+  },
+  "uplayParser": {
+    "errors": {
+      "invalidManifestsOverride": "> Uplay Directory Override не является действительной директорией.",
+      "uplayNotCompatible": "> Анализ UPlay недоступен для Linux и Mac.",
+      "uplayDirNotFound": "> Указанный каталог UPlay не существует.",
+      "uplayNotInstalled": "> UPlay не установлен в указанном каталоге.",
+      "fatalError__i": "> анализатор UPlay не сработал из-за фатальной ошибки:\n ${error}"
+    }
+  },
+  "gogParser": {
+    "galaxyExeOverrideTitle": "Переопределение пути Galaxy",
+    "launcherModeInputTitle": "Запуск игр через GOG Galaxy",
+    "parseLinkedExecsTitle": "Анализ связанных исполняемых файлов из GOG Galaxy",
+    "errors": {
+      "invalidGalaxyExeOverride": "> Путь Galaxy Client Override неправильный.",
+      "fatalError__i": "> Сбой анализа GOG Galaxy по причине фатальной ошибки:\n ${error}"
+    }
+  },
+  "nav": {
+    "component": {
+      "settings": "Настройки"
+    }
+  },
+  "userExceptions": {
+    "component": {
+      "buttons": {
+        "save": "Сохранить"
+      }
+    }
+  },
+  "parsers": {
+    "component": {
+      "buttons": {
+        "save": "Сохранить",
+        "delete": "Удалить",
+        "undoChanges": "Отменить изменения"
+      }
+    }
+  }
+}

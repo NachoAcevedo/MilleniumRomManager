@@ -1,0 +1,81 @@
+name: CIPR
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  pull_request:
+    branches:
+      - "master"
+      - "!l10n_*" # don't run from a crowdin PR
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4.1.6
+
+      - name: Setup Python environment
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: "3.10"
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 24
+          check-latest: true
+
+      - name: Install dependencies
+        run: |
+          npm install -g yarn@1.22
+          yarn install --frozen-lockfile
+
+      - name: Build
+        run: |
+          git lfs pull
+          yarn run presets:validate
+          yarn run build:dist
+
+      - name: Build Linux
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: yarn run build:linux --publish=never
+
+      - name: Build Windows
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: yarn run build:win --publish=never
+
+      - name: Build Mac
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: yarn run build:mac --publish=never
+
+      - name: Upload Artifacts Windows
+        uses: actions/upload-artifact@v4.3.3
+        if: ${{ matrix.os == 'windows-latest' }}
+        with:
+          name: srm-build-windows
+          path: |
+            release/*.exe
+            release/*.msi
+      - name: Upload Artifacts Linux
+        uses: actions/upload-artifact@v4.3.3
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        with:
+          name: srm-build-linux
+          path: |
+            release/*.deb
+            release/*.AppImage
+      - name: Upload Artifacts Mac
+        uses: actions/upload-artifact@v4.3.3
+        if: ${{ matrix.os == 'macOS-latest' }}
+        with:
+          name: srm-build-mac
+          path: |
+            release/*.dmg
+            release/*.zip

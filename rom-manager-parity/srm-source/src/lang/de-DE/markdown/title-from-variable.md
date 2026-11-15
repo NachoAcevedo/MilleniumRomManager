@@ -1,0 +1,64 @@
+# Title from custom variable
+
+Allows one to overwrite the extracted title with a custom variable, pulled from the `json` files described below. This happens right after title extraction, meaning that the new title can be used for fuzzy matching and so on. Gruppen und Variablen beachten Groß- und Kleinschreibung, außer etwas anderes ist aktiviert.
+
+Title matching is limited to specific groups of custom variables. For example, this is how you specify groups "FBN" and "PSN":
+
+```
+${RPCS3}${PSN}
+```
+
+# So funktioniert es
+
+There are two variable files, `customVariables.json` which is maintained by SRM (don't change this one, your changes will be overwritten every time SRM restarts) and `userVariables.json` which is where you should put your own variables. Both files are located in SRM's `Config Directory`. Your handcrafted variables will take preference over SRMs defaults.
+
+Both `customVariables.json` and `userVariables.json` have the same JSON structure. SRM benötigt die folgende Struktur:
+
+```
+{
+    "Group1": {
+        "NPUB30698": "Catherine",
+        "NPUB30024": "1942: Joint Strike",
+        ...
+    },
+    "Group2": {
+        "The Legend Of Zelda": "The Legend Of Link",
+        ...
+    },
+    ...
+}
+```
+
+Then if your glob were `romsdir/${title}.wad` and you had a `The Legend of Zelda.wad` located in `romsdir`, you would set the title from custom variable field to `${Group2}` to obtain a title of "The Legend of Link".
+
+## Separating sort-as-title from display-title
+If you'd like a separate sorting title in steam, you can replace
+
+```
+    "Group1": {
+        "NPUB30698": "Catherine",
+        ...
+    }, ...
+```
+by
+
+```
+    "Group1": {
+        "NPUB30698": {
+            "DisplayTitle": "Catherine",
+            "SortAsTitle": "Catherine the Great"
+        },
+        ...
+    }, ...
+```
+
+Note that you also have to configure the `Sort Names From Custom Variable` field in the parser; in this case you would set it to `${Group1}`.
+
+
+## Case-insensitive variables
+
+If enabled, case-insensitive matching will be done and first matched custom variable will be used.
+
+## Datei überspringen, wenn Variable nicht gefunden wurde
+
+Wenn aktiviert, werden Titel, die nicht mit einer Variable übereinstimmen, ausgeschlossen.

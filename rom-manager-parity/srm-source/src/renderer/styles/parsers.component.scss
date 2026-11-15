@@ -1,0 +1,110 @@
+@import "mixins";
+
+:host {
+  --markdown-width: 0fr;
+
+  display: grid;
+  //display: none;
+  overflow: auto;
+
+  min-height: 0;
+  height: 100%;
+  // The Parsers tab's last two columns: the form, and (when an info button
+  // is clicked) the docs on the right.
+  grid-template-areas:
+    "nestedForm docs"
+    "menu menu";
+
+  grid-template-columns: 1fr var(--markdown-width);
+  grid-template-rows: 1fr auto;
+
+  .docs {
+    padding: 1em;
+    overflow: auto;
+    border-left: 1px solid var(--color-parsers-menu-background);
+
+    grid-area: docs;
+  }
+  ng-select {
+    margin: 0 0 0.5em 0;
+  }
+  .nestedForm {
+    padding: 1em;
+
+    grid-area: nestedForm;
+
+    @include webkitScrollbar(nested-form-scrollbar);
+
+    overflow: auto;
+
+    background-color: var(--color-nested-form-background);
+
+    label {
+      display: flex;
+
+      margin: 0 0 0.35em 0;
+      text-transform: var(--font-transform-nested-form-label);
+      color: var(--color-nested-form-label);
+
+      align-items: center;
+      grid-area: label;
+
+      .infoButton {
+        margin: var(--margin-info-button);
+        order: var(--order-info-button);
+      }
+    }
+
+    ::ng-deep ng-text-input {
+      @for $i from 0 through 2 {
+        highlight {
+          &.level-#{$i} {
+            color: var(--color-highlight-level-#{$i});
+          }
+        }
+        &:hover {
+          highlight {
+            &.level-#{$i} {
+              color: var(--color-highlight-level-#{$i}-hover);
+            }
+          }
+        }
+        &:focus {
+          highlight {
+            &.level-#{$i} {
+              color: var(--color-highlight-level-#{$i}-active);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .menu {
+    @include webkitScrollbar(parser-menu-scrollbar, 0.5em);
+
+    display: flex;
+    overflow: auto;
+
+    border: 0.5em solid transparent;
+    background-color: var(--color-parsers-menu-background);
+
+    grid-area: menu;
+
+    > div {
+      @include clickButtonColor(click-button, true);
+      @include button();
+
+      margin: 0 0.25em;
+      &:last-child {
+        margin-right: 0;
+      }
+      &:first-child {
+        margin-left: 0;
+      }
+      &.dangerousButton {
+        @include clickButtonColor(dangerous-click-button);
+      }
+    }
+  }
+}
