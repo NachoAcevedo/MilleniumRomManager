@@ -1,0 +1,7 @@
+{
+  "name": "launcher-auto-close",
+  "common_name": "ExternalLauncherAutoClose",
+  "description": "Cierra launchers asociados a juegos externos cuando termina la última partida.",
+  "version": "0.1.0",
+  "backendType": "lua"
+}
